@@ -27,3 +27,12 @@ mccabe==0.7.0
 vulture==2.13  # Find dead code
 pyflakes==3.2.0  # Fast static analysis
 pydocstyle==6.3.0  # Docstring checker
+
+# Testing Framework (100% GRATUITO)
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+pytest-mock==3.14.0
+
+# UI Dashboard (100% GRATUITO)
+gradio==5.5.0
