@@ -1,0 +1,26 @@
+{
+  "threshold": 20,
+  "reporters": ["html", "console", "json"],
+  "format": ["python"],
+  "ignore": [
+    "**/__pycache__/**",
+    "**/node_modules/**",
+    "**/venv/**",
+    "**/env/**",
+    "**/.venv/**",
+    "**/outputs/**",
+    "**/*.pyc",
+    "**/.git/**",
+    "**/docs/**"
+  ],
+  "minLines": 5,
+  "minTokens": 50,
+  "output": "./reports/jscpd",
+  "mode": "strict",
+  "formatsExts": {
+    "python": ["py"]
+  },
+  "absolute": true,
+  "gitignore": true,
+  "exitCode": 0
+}

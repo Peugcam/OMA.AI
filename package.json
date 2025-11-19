@@ -1,0 +1,22 @@
+{
+  "name": "oma-refactored-analysis",
+  "version": "1.0.0",
+  "description": "Code analysis tools for OMA project",
+  "scripts": {
+    "check:duplicates": "jscpd .",
+    "check:duplicates:watch": "nodemon --watch . --ext py --exec \"npm run check:duplicates\"",
+    "check:duplicates:ci": "jscpd . --exitCode 1",
+    "report": "jscpd . && open reports/jscpd/html/index.html"
+  },
+  "devDependencies": {
+    "jscpd": "^4.0.5",
+    "nodemon": "^3.1.0"
+  },
+  "keywords": [
+    "code-analysis",
+    "duplicate-detection",
+    "python"
+  ],
+  "author": "",
+  "license": "ISC"
+}
