@@ -1,9 +1,13 @@
 """
-Visual Agent - Planejador de Conteudo Visual
+Visual Agent - Planejador de Conteúdo Visual Híbrido
 
-Analisa roteiro e cria plano visual com placeholders.
-Usa apenas OpenRouter (uma API).
-Integrado com módulos otimizados.
+Estratégia inteligente:
+1. Classifica cada cena como "genérica" ou "específica"
+2. Genérica → busca vídeo no Pexels (GRÁTIS)
+3. Específica → gera imagem com Stability AI (PAGO)
+4. Mix perfeito: vídeos reais + imagens conceituais
+
+Usa: Pexels API + Stability AI + OpenRouter (Gemma-2-9B)
 """
 
 import logging
@@ -18,11 +22,15 @@ from core import AIClient, AIClientFactory, PromptTemplates, ResponseValidator
 
 class VisualAgent:
     """
-    Agente especializado em gerar/buscar conteúdo visual.
+    Agente especializado em gerar/buscar conteúdo visual híbrido.
 
-    Uses:
-    - Stability AI para geração de imagens
-    - Gemma-2-9B (via OpenRouter) para análise e keywords
+    Estratégia:
+    - Classifica cena automaticamente (LLM)
+    - Pexels API para vídeos reais (genérico)
+    - Stability AI para imagens únicas (específico)
+    - Gemma-2-9B (via OpenRouter) para análise e decisão
+
+    Resultado: Mix perfeito de vídeos + imagens conceituais
     """
 
     def __init__(self, model_name: str = None):
@@ -40,7 +48,12 @@ class VisualAgent:
         else:
             self.llm = AIClientFactory.create_for_agent("visual")
 
-        # Stability AI API key
+        # Pexels API key (stock videos - GRÁTIS)
+        self.pexels_api_key = os.getenv("PEXELS_API_KEY")
+        if not self.pexels_api_key:
+            self.logger.warning("PEXELS_API_KEY não configurada")
+
+        # Stability AI API key (image generation - PAGO)
         self.stability_api_key = os.getenv("STABILITY_API_KEY")
         if not self.stability_api_key:
             self.logger.warning("STABILITY_API_KEY não configurada, usando placeholders")
@@ -116,47 +129,364 @@ class VisualAgent:
         state: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Gera imagem para uma cena específica.
+        Gera conteúdo visual para uma cena usando estratégia híbrida.
+
+        FLUXO HÍBRIDO INTELIGENTE:
+        1. Classifica cena (genérica vs específica)
+        2. Genérica → Pexels (vídeo real)
+        3. Específica → Stability AI (imagem conceitual)
+        4. Fallback → Placeholder
 
         Args:
             scene: Dados da cena do roteiro
             state: Estado completo
 
         Returns:
-            Dados visuais da cena
+            Dados visuais da cena com source e custo
         """
         scene_num = scene.get("scene_number", 1)
         description = scene.get("visual_description", "")
         mood = scene.get("mood", "neutral")
 
-        # Criar prompt para Stability AI
-        prompt = self._create_image_prompt(description, mood, state)
+        self.logger.info(f"🎬 Cena {scene_num}: {description[:60]}...")
 
-        # Gerar imagem
+        # STEP 1: Classificar tipo de cena
+        scene_type = await self._classify_scene_type(description, mood)
+        self.logger.info(f"📊 Classificação: {scene_type}")
+
+        # STEP 2: Executar estratégia apropriada
+        if scene_type == "pexels":
+            # Tentar buscar vídeo no Pexels
+            if self.pexels_api_key:
+                try:
+                    video_data = await self._search_pexels(description, mood)
+                    if video_data and video_data.get("local_path"):
+                        self.logger.info(f"✅ Vídeo Pexels baixado (custo: $0)")
+                        return {
+                            "scene_number": scene_num,
+                            "media_path": video_data["local_path"],
+                            "media_type": "video",
+                            "source": "pexels",
+                            "duration": scene.get("duration", 5),
+                            "mood": mood,
+                            "cost": 0.0,
+                            "keywords": video_data.get("keywords", []),
+                            "pexels_url": video_data.get("url")
+                        }
+                    else:
+                        self.logger.warning(f"⚠️ Pexels não encontrou, fallback → Stability AI")
+                except Exception as e:
+                    self.logger.error(f"❌ Erro Pexels: {e}, fallback → Stability AI")
+
+        # STEP 3: Usar Stability AI (cena específica OU fallback)
         if self.stability_api_key:
             try:
+                prompt = await self._create_image_prompt(description, mood, state)
                 image_path = self._generate_with_stability(prompt, scene_num)
-                source = "stability_ai"
+
+                cost = 0.04  # SDXL 1024x1024
+                self.logger.info(f"🎨 Imagem Stability gerada (custo: ${cost})")
+
+                return {
+                    "scene_number": scene_num,
+                    "media_path": str(image_path),
+                    "media_type": "image",
+                    "source": "stability_ai",
+                    "prompt_used": prompt,
+                    "duration": scene.get("duration", 5),
+                    "mood": mood,
+                    "cost": cost,
+                    "classification": scene_type
+                }
             except Exception as e:
-                self.logger.error(f"Erro ao gerar com Stability AI: {e}")
-                image_path = self._create_placeholder_image(scene_num)
-                source = "placeholder"
-        else:
-            self.logger.warning("Usando placeholder (Stability AI não configurada)")
-            image_path = self._create_placeholder_image(scene_num)
-            source = "placeholder"
+                self.logger.error(f"❌ Erro Stability AI: {e}, usando placeholder")
+
+        # STEP 4: Fallback final → Placeholder
+        self.logger.warning("⚠️ Usando placeholder (nenhuma API disponível)")
+        placeholder_path = self._create_placeholder_image(scene_num)
 
         return {
             "scene_number": scene_num,
-            "image_path": str(image_path),
-            "prompt_used": prompt,
+            "media_path": str(placeholder_path),
+            "media_type": "image",
+            "source": "placeholder",
             "duration": scene.get("duration", 5),
-            "source": source,
-            "mood": mood
+            "mood": mood,
+            "cost": 0.0
         }
 
 
-    def _create_image_prompt(
+    async def _classify_scene_type(self, description: str, mood: str) -> str:
+        """
+        Classifica cena como "pexels" ou "stability" usando LLM.
+
+        PEXELS = Cenas genéricas filmáveis (vídeos reais)
+        STABILITY = Cenas específicas/abstratas (imagens conceituais)
+
+        Args:
+            description: Descrição visual da cena
+            mood: Mood/atmosfera
+
+        Returns:
+            "pexels" ou "stability"
+        """
+        try:
+            classification_prompt = f"""Classifique esta cena de vídeo como "pexels" ou "stability".
+
+DESCRIÇÃO DA CENA: {description}
+MOOD: {mood}
+
+REGRAS CRÍTICAS:
+
+"pexels" = SEMPRE para cenas com PESSOAS (Stability AI é HORRÍVEL com rostos):
+✅ QUALQUER cena com pessoas, rostos, mãos visíveis
+✅ Expressões faciais, emoções humanas
+✅ Interações entre pessoas (reunião, conversa, aperto de mãos)
+✅ Pessoas em ação (trabalhando, digitando, caminhando, apresentando)
+✅ Close-ups de pessoas
+✅ Lugares comuns (escritório, café, rua, natureza, casa)
+✅ Objetos cotidianos com pessoas (laptop sendo usado, telefone na mão)
+
+"stability" = APENAS para cenas SEM pessoas/rostos:
+✅ Logos e branding (sem pessoas)
+✅ Ambientes vazios futuristas
+✅ Conceitos abstratos (tecnologia holográfica, visualizações de dados)
+✅ Produtos sozinhos (sem mãos segurando)
+✅ Paisagens conceituais
+✅ Arte abstrata
+✅ Objetos impossíveis de filmar
+
+CRÍTICO:
+- Se mencionar "pessoa", "rosto", "mão", "sorriso", "olhar" → SEMPRE "pexels"
+- Stability AI gera rostos DEFORMADOS e mãos com dedos extras 😱
+- Apenas use "stability" se NÃO tiver humanos na cena
+
+IMPORTANTE: Na dúvida, escolha "pexels" (vídeos reais são sempre melhores).
+
+Responda APENAS com uma palavra: pexels ou stability"""
+
+            response = await self.llm.chat(
+                messages=[{
+                    "role": "user",
+                    "content": classification_prompt
+                }],
+                temperature=0.3,
+                max_tokens=50  # Aumentado de 10 para 50
+            )
+
+            classification = response.strip().lower()
+
+            # Debug
+            self.logger.info(f"LLM response raw: '{response}'")
+            self.logger.info(f"LLM response cleaned: '{classification}'")
+
+            # Validar resposta
+            if "pexels" in classification:
+                return "pexels"
+            elif "stability" in classification:
+                return "stability"
+            else:
+                # Fallback: detectar palavras-chave diretamente
+                desc_lower = description.lower()
+
+                # Palavras que indicam PESSOAS (sempre Pexels)
+                people_keywords = ['pessoa', 'pessoas', 'rosto', 'mão', 'mãos', 'equipe',
+                                   'grupo', 'trabalhando', 'sorrindo', 'olhando', 'reunião']
+
+                # Palavras que indicam ABSTRATO (Stability)
+                abstract_keywords = ['logo', 'holográfico', 'digital', 'abstrato', 'visualização',
+                                     'conceito', 'futurista', 'partículas', 'cérebro digital']
+
+                # Checar pessoas primeiro
+                if any(keyword in desc_lower for keyword in people_keywords):
+                    self.logger.info(f"Detectou palavra-chave de PESSOA, forçando pexels")
+                    return "pexels"
+
+                # Checar abstrato
+                if any(keyword in desc_lower for keyword in abstract_keywords):
+                    self.logger.info(f"Detectou palavra-chave ABSTRATA, forçando stability")
+                    return "stability"
+
+                # Default: pexels (vídeos reais preferíveis)
+                self.logger.warning(f"Classificação ambígua: '{classification}', usando pexels (default)")
+                return "pexels"
+
+        except Exception as e:
+            self.logger.error(f"Erro ao classificar cena: {e}, usando pexels (default)")
+            return "pexels"
+
+
+    async def _search_pexels(self, description: str, mood: str) -> Dict[str, Any]:
+        """
+        Busca vídeo no Pexels API.
+
+        Args:
+            description: Descrição da cena em português
+            mood: Mood/atmosfera
+
+        Returns:
+            Dict com url e metadata do vídeo, ou None se não encontrar
+        """
+        try:
+            # Gerar keywords em inglês usando LLM
+            keywords = await self._generate_pexels_keywords(description, mood)
+
+            self.logger.info(f"🔍 Buscando Pexels: {keywords}")
+
+            # Fazer busca no Pexels
+            response = requests.get(
+                "https://api.pexels.com/videos/search",
+                headers={"Authorization": self.pexels_api_key},
+                params={
+                    "query": keywords,
+                    "per_page": 3,
+                    "orientation": "landscape",
+                    "size": "medium"  # HD quality
+                },
+                timeout=10
+            )
+
+            if response.status_code != 200:
+                self.logger.error(f"Pexels API error: {response.status_code}")
+                return None
+
+            data = response.json()
+
+            if not data.get("videos"):
+                self.logger.warning(f"Nenhum vídeo encontrado para: {keywords}")
+                return None
+
+            # Pegar primeiro vídeo
+            video = data["videos"][0]
+
+            # Pegar URL do arquivo de vídeo (melhor qualidade disponível)
+            video_files = video.get("video_files", [])
+            if not video_files:
+                return None
+
+            # Preferir HD (1280x720 ou maior)
+            hd_video = None
+            for vf in video_files:
+                if vf.get("width", 0) >= 1280:
+                    hd_video = vf
+                    break
+
+            # Se não tiver HD, pegar o de maior qualidade
+            if not hd_video:
+                hd_video = max(video_files, key=lambda x: x.get("width", 0))
+
+            # Baixar o vídeo localmente
+            video_url = hd_video["link"]
+            video_id = video.get("id")
+            local_path = self._download_pexels_video(video_url, video_id)
+
+            return {
+                "url": video_url,
+                "local_path": str(local_path) if local_path else None,
+                "width": hd_video.get("width"),
+                "height": hd_video.get("height"),
+                "duration": video.get("duration", 10),
+                "id": video_id,
+                "keywords": keywords
+            }
+
+        except Exception as e:
+            self.logger.error(f"Erro ao buscar Pexels: {e}")
+            return None
+
+
+    def _download_pexels_video(self, video_url: str, video_id: int) -> Path:
+        """
+        Baixa vídeo do Pexels localmente.
+
+        Args:
+            video_url: URL do vídeo
+            video_id: ID do vídeo no Pexels
+
+        Returns:
+            Path do arquivo baixado
+        """
+        try:
+            # Criar diretório de downloads
+            download_dir = Path("C:/Users/paulo/OneDrive/Desktop/OMA_Videos/pexels_videos")
+            download_dir.mkdir(parents=True, exist_ok=True)
+
+            # Nome do arquivo
+            filename = f"pexels_{video_id}.mp4"
+            filepath = download_dir / filename
+
+            # Se já existe, retornar
+            if filepath.exists():
+                self.logger.info(f"Vídeo já existe: {filepath}")
+                return filepath
+
+            # Baixar
+            self.logger.info(f"📥 Baixando vídeo Pexels ID {video_id}...")
+            response = requests.get(video_url, stream=True, timeout=60)
+            response.raise_for_status()
+
+            # Salvar
+            with open(filepath, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            file_size = filepath.stat().st_size / (1024 * 1024)  # MB
+            self.logger.info(f"✅ Download completo: {filepath} ({file_size:.1f} MB)")
+
+            return filepath
+
+        except Exception as e:
+            self.logger.error(f"Erro ao baixar vídeo Pexels: {e}")
+            return None
+
+
+    async def _generate_pexels_keywords(self, description: str, mood: str) -> str:
+        """
+        Gera keywords em inglês otimizadas para busca no Pexels.
+
+        Args:
+            description: Descrição em português
+            mood: Mood/atmosfera
+
+        Returns:
+            Keywords em inglês para Pexels
+        """
+        try:
+            prompt = f"""Gere keywords em inglês para buscar vídeo no Pexels.
+
+DESCRIÇÃO: {description}
+MOOD: {mood}
+
+REGRAS:
+- Máximo 3-5 palavras-chave
+- Em inglês
+- Genéricas (não específicas demais)
+- Sem pontuação
+
+EXEMPLOS:
+"Pessoa trabalhando em laptop" → "person working laptop office"
+"Reunião de equipe colaborativa" → "team meeting collaboration"
+"Logo holográfico futurista" → "holographic technology futuristic"
+
+Responda APENAS com as keywords (sem aspas, sem explicação):"""
+
+            response = await self.llm.chat(
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=30
+            )
+
+            keywords = response.strip().strip('"').strip("'")
+
+            return keywords
+
+        except Exception as e:
+            self.logger.error(f"Erro ao gerar keywords: {e}")
+            # Fallback: tradução simples
+            return description[:50]
+
+
+    async def _create_image_prompt(
         self,
         description: str,
         mood: str,
@@ -179,7 +509,7 @@ class VisualAgent:
         prompt_pt = f"{description}, {mood} mood, {style} style, high quality, detailed, professional photography, 4k"
 
         # Traduzir para inglês usando o LLM
-        prompt_en = self._translate_to_english(prompt_pt)
+        prompt_en = await self._translate_to_english(prompt_pt)
 
         self.logger.info(f"Prompt PT: {prompt_pt[:60]}...")
         self.logger.info(f"Prompt EN: {prompt_en[:60]}...")
@@ -187,7 +517,7 @@ class VisualAgent:
         return prompt_en
 
 
-    def _translate_to_english(self, text: str) -> str:
+    async def _translate_to_english(self, text: str) -> str:
         """
         Traduz texto de português para inglês usando o LLM.
 
@@ -198,7 +528,7 @@ class VisualAgent:
             Texto traduzido para inglês
         """
         try:
-            translation = self.llm.chat(
+            translation = await self.llm.chat(
                 messages=[{
                     "role": "user",
                     "content": f"Translate this to English (just the translation, no extra text):\n\n{text}"

@@ -78,7 +78,7 @@ class AIClient:
             "errors": 0
         }
 
-    def chat(
+    async def chat(
         self,
         messages: list[dict],
         temperature: float = 0.7,
@@ -86,7 +86,7 @@ class AIClient:
         system_prompt: Optional[str] = None
     ) -> str:
         """
-        Realiza chat completion.
+        Realiza chat completion (async).
 
         Args:
             messages: Lista de mensagens no formato OpenAI

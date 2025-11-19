@@ -1,0 +1,159 @@
+{
+  "test_name": "Vídeo Tech",
+  "timestamp": "2025-11-19T15:23:37.243717",
+  "brief": {
+    "title": "Futuro da IA - Inovação Tecnológica",
+    "description": "\n    Vídeo conceitual sobre avanços em inteligência artificial.\n\n    Estrutura:\n    - Abertura: Cientista de dados analisando código\n    - Conceito: Cérebro digital com redes neurais holográficas\n    - Equipe: Desenvolvedores colaborando em projeto\n    - Fechamento: Visualização abstrata de algoritmos e dados\n    ",
+    "duration": 30,
+    "target_audience": "Empresas tech e investidores",
+    "style": "futurista e conceitual",
+    "mood": "inovador e intelectual"
+  },
+  "script": {
+    "script_id": "script_1698350521",
+    "title": "Transforme Seu Estilo de Vida Hoje",
+    "duration_seconds": 30,
+    "scenes": [
+      {
+        "scene_number": 1,
+        "duration": 5,
+        "time_range": "00:00-00:05",
+        "visual_description": "Uma pessoa olhando para o espelho, com expressão de insatisfação. A câmera foca em sua roupa e expressão.",
+        "narration": "Você está se sentindo preso na rotina?",
+        "on_screen_text": "Sente-se preso?",
+        "keywords": [
+          "routine",
+          "reflection",
+          "change"
+        ],
+        "mood": "Reflexiva e intrigante"
+      },
+      {
+        "scene_number": 2,
+        "duration": 7,
+        "time_range": "00:05-00:12",
+        "visual_description": "Cenas rápidas de pessoas felizes fazendo exercícios, cozinhando e socializando.",
+        "narration": "Imagine um novo você, cheio de energia e confiança.",
+        "on_screen_text": "Novo você!",
+        "keywords": [
+          "energy",
+          "confidence",
+          "lifestyle"
+        ],
+        "mood": "Positiva e energizante"
+      },
+      {
+        "scene_number": 3,
+        "duration": 6,
+        "time_range": "00:12-00:18",
+        "visual_description": "Alguém preparando uma refeição saudável, sorrindo, enquanto coloca os ingredientes em uma tigela.",
+        "narration": "Pequenas mudanças fazem uma grande diferença na sua saúde.",
+        "on_screen_text": "Mude sua alimentação!",
+        "keywords": [
+          "healthy eating",
+          "cooking",
+          "wellness"
+        ],
+        "mood": "Inspiradora e motivacional"
+      },
+      {
+        "scene_number": 4,
+        "duration": 6,
+        "time_range": "00:18-00:24",
+        "visual_description": "Grupo de amigos se divertindo em um parque, demonstrando alegria e união.",
+        "narration": "Conecte-se com pessoas que inspiram você.",
+        "on_screen_text": "Conecte-se!",
+        "keywords": [
+          "friendship",
+          "community",
+          "fun"
+        ],
+        "mood": "Feliz e convidativa"
+      },
+      {
+        "scene_number": 5,
+        "duration": 6,
+        "time_range": "00:24-00:30",
+        "visual_description": "Tela preta com o logotipo da marca e um botão de 'Inscreva-se'.",
+        "narration": "Junte-se a nós e comece sua transformação hoje mesmo!",
+        "on_screen_text": "Inscreva-se agora!",
+        "keywords": [
+          "join us",
+          "transformation",
+          "subscribe"
+        ],
+        "mood": "Urgente e motivacional"
+      }
+    ],
+    "narration_full": "Você está se sentindo preso na rotina? Imagine um novo você, cheio de energia e confiança. Pequenas mudanças fazem uma grande diferença na sua saúde. Conecte-se com pessoas que inspiram você. Junte-se a nós e comece sua transformação hoje mesmo!",
+    "music_style": "Musica animada e motivacional",
+    "estimated_word_count": 52,
+    "generated_at": "2025-11-19T15:23:18.170280",
+    "model": "openai/gpt-4o-mini-2024-07-18"
+  },
+  "visual_plan": {
+    "visual_plan_id": "visual_20251119_152318",
+    "scenes": [
+      {
+        "scene_number": 1,
+        "media_path": "https://videos.pexels.com/video-files/10472896/10472896-uhd_4096_2160_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Reflexiva e intrigante",
+        "cost": 0.0,
+        "keywords": "person mirror reflection dissatisfied"
+      },
+      {
+        "scene_number": 2,
+        "media_path": "C:\\Users\\paulo\\OneDrive\\Desktop\\OMA_Videos\\images\\scene_02.png",
+        "media_type": "image",
+        "source": "stability_ai",
+        "prompt_used": "Fast scenes of happy people exercising, cooking, and socializing. Positive and energizing mood, professional style, high quality, detailed, professional photography, 4k.",
+        "duration": 7,
+        "mood": "Positiva e energizante",
+        "cost": 0.04,
+        "classification": "pexels"
+      },
+      {
+        "scene_number": 3,
+        "media_path": "https://videos.pexels.com/video-files/7963251/7963251-uhd_3840_2160_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 6,
+        "mood": "Inspiradora e motivacional",
+        "cost": 0.0,
+        "keywords": "healthy cooking happy ingredients"
+      },
+      {
+        "scene_number": 4,
+        "media_path": "https://videos.pexels.com/video-files/9293441/9293441-uhd_4096_2160_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 6,
+        "mood": "Feliz e convidativa",
+        "cost": 0.0,
+        "keywords": "friends laughing park happiness"
+      },
+      {
+        "scene_number": 5,
+        "media_path": "C:\\Users\\paulo\\OneDrive\\Desktop\\OMA_Videos\\images\\scene_05.png",
+        "media_type": "image",
+        "source": "stability_ai",
+        "prompt_used": "Black screen with brand logo and a \"Sign Up\" button. Urgent and motivational mood, professional style, high quality, detailed, professional photography, 4k.",
+        "duration": 6,
+        "mood": "Urgente e motivacional",
+        "cost": 0.04,
+        "classification": "stability"
+      }
+    ],
+    "generated_at": "2025-11-19T15:23:18.498709"
+  },
+  "statistics": {
+    "total_scenes": 5,
+    "pexels_count": 3,
+    "stability_count": 2,
+    "total_cost": 0.08,
+    "pexels_rate": 0.6
+  }
+}

@@ -24,7 +24,6 @@ from datetime import datetime
 
 # Import dos agentes
 from agents.supervisor_agent import SupervisorAgent
-from core.state_graph import VideoState
 
 
 # ============================================================================
@@ -47,10 +46,12 @@ async def create_video(
 
     # Validações
     if not description or len(description) < 10:
-        return None, "❌ Descrição muito curta (mín 10 caracteres)", ""
+        yield None, "❌ Descrição muito curta (mín 10 caracteres)", ""
+        return
 
     if duration < 10 or duration > 120:
-        return None, "❌ Duração deve estar entre 10-120 segundos", ""
+        yield None, "❌ Duração deve estar entre 10-120 segundos", ""
+        return
 
     # Criar brief
     brief = {
@@ -63,16 +64,16 @@ async def create_video(
     }
 
     # Inicializar estado
-    state = VideoState(
-        task_id=f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        brief=brief,
-        created_at=datetime.now().isoformat(),
-        current_phase=0,
-        completed_tasks=[],
-        failed_tasks=[],
-        errors=[],
-        is_complete=False
-    )
+    state = {
+        "task_id": f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+        "brief": brief,
+        "created_at": datetime.now().isoformat(),
+        "current_phase": 0,
+        "completed_tasks": [],
+        "failed_tasks": [],
+        "errors": [],
+        "is_complete": False
+    }
 
     try:
         # Inicializar supervisor
@@ -98,14 +99,16 @@ async def create_video(
 
         if not success:
             errors = [st.error for st in plan.subtasks if st.error]
-            return None, f"❌ Falha na execução:\n" + "\n".join(errors), ""
+            yield None, f"❌ Falha na execução:\n" + "\n".join(errors), ""
+            return
 
         # FASE 5: Validar
         yield None, "✅ Validando resultado...", ""
         is_valid, issues = await supervisor.validate_output(final_state)
 
         if not is_valid:
-            return None, f"⚠️ Problemas encontrados:\n" + "\n".join(issues), ""
+            yield None, f"⚠️ Problemas encontrados:\n" + "\n".join(issues), ""
+            return
 
         # Sucesso!
         video_path = final_state.get('video_path')
@@ -125,10 +128,10 @@ async def create_video(
 🎙️ **Narração:** {len(final_state.get('audio_files', {}).get('narration', {}).get('timestamps', []))} segmentos
 """
 
-        return video_path, success_msg, str(metadata)
+        yield video_path, success_msg, str(metadata)
 
     except Exception as e:
-        return None, f"❌ Erro: {str(e)}", ""
+        yield None, f"❌ Erro: {str(e)}", ""
 
 
 def create_example_video(example_name: str):

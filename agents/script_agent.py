@@ -77,8 +77,8 @@ class ScriptAgent:
         )
 
         try:
-            # Chamar LLM (metodo sincrono)
-            response = self.llm.chat(
+            # Chamar LLM (metodo async)
+            response = await self.llm.chat(
                 messages=[{"role": "user", "content": prompt}],
                 system_prompt=self.system_prompt,
                 temperature=self.temperature,

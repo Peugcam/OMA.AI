@@ -172,21 +172,46 @@ class EditorAgent:
         try:
             # Criar vídeo para cada cena
             for i, scene in enumerate(scenes):
-                image_path = scene.get("image_path")
+                media_path = scene.get("media_path")
+                media_type = scene.get("media_type", "image")
                 duration = scene.get("duration", 5)
 
-                if not image_path or not Path(image_path).exists():
-                    self.logger.warning(f"Imagem não encontrada para cena {i+1}, pulando...")
+                if not media_path or not Path(media_path).exists():
+                    self.logger.warning(f"Mídia não encontrada para cena {i+1}: {media_path}")
                     continue
 
-                # Criar vídeo da imagem com duração
+                self.logger.info(f"Processando cena {i+1}: {media_path}")
+
+                # Se já é vídeo, apenas cortar/ajustar duração
+                if media_type == "video":
+                    temp_video = temp_dir / f"scene_{i:02d}.mp4"
+
+                    cmd = [
+                        "ffmpeg",
+                        "-y",
+                        "-i", str(media_path),
+                        "-t", str(duration),
+                        "-c:v", "libx264",
+                        "-preset", "fast",
+                        "-crf", "23",
+                        "-vf", "scale=1280:720",
+                        "-an",  # Sem áudio
+                        str(temp_video)
+                    ]
+
+                    subprocess.run(cmd, check=True, capture_output=True)
+                    temp_videos.append(temp_video)
+                    self.logger.info(f"✅ Vídeo {i+1} processado")
+                    continue
+
+                # Se é imagem, criar vídeo da imagem
                 temp_video = temp_dir / f"scene_{i:02d}.mp4"
 
                 cmd = [
                     "ffmpeg",
                     "-y",  # Sobrescrever
                     "-loop", "1",  # Loop da imagem
-                    "-i", str(image_path),  # Input
+                    "-i", str(media_path),  # Input
                     "-t", str(duration),  # Duração
                     "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2",  # Resize
                     "-c:v", "libx264",  # Codec

@@ -229,7 +229,7 @@ DIRETRIZES:
 
 EXPERTISE:
 - Composição visual
-- Stock video libraries (Pexels, Pixabay)
+- Stock video libraries (Pexels)
 - Estética de vídeos sociais
 - Keywords efetivas para busca
 

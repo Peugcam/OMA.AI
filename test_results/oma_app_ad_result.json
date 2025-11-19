@@ -1,0 +1,165 @@
+{
+  "briefing": {
+    "title": "OMA - Produtividade com IA",
+    "description": "\nCrie um anúncio moderno e impactante para o OMA App:\n\n**ESTRUTURA SUGERIDA:**\n\n1. **ABERTURA (5s)**: Pessoa frustrada com múltiplas tarefas, papéis espalhados,\n   caos na mesa de trabalho. Expressão de stress.\n\n2. **PROBLEMA (5s)**: Montagem rápida mostrando: calendários confusos,\n   post-its perdidos, notificações em excesso, pessoa perdida.\n\n3. **SOLUÇÃO - Logo OMA (3s)**: Logo do OMA aparecendo de forma holográfica\n   e futurista, com efeito de partículas de IA.\n\n4. **DEMONSTRAÇÃO (8s)**: Pessoa sorrindo usando o app no celular,\n   organizando tarefas com facilidade. Interface limpa e moderna.\n\n5. **BENEFÍCIOS (6s)**: Visualização abstrata de produtividade:\n   gráficos crescentes, cérebro digital conectando ideias, fluxo otimizado.\n\n6. **CALL-TO-ACTION (3s)**: Logo OMA + texto \"Baixe Grátis\" com\n   botão de download destacado.\n\n**MENSAGEM PRINCIPAL:**\n\"Organize sua vida. Conquiste seus objetivos. Seja mais produtivo com IA.\"\n\n**TOM:** Motivacional, moderno, tecnológico, inspirador\n\n**ESTILO VISUAL:**\n- Cenas com pessoas: realistas (Pexels)\n- Logo/conceitos abstratos: futurista (Stability AI)\n",
+    "duration": 30,
+    "target_audience": "Profissionais ocupados, empreendedores, estudantes universitários (25-40 anos)",
+    "style": "modern, tech, motivational",
+    "tone": "inspirational",
+    "cta": "Baixe o OMA grátis e transforme sua produtividade hoje!",
+    "keywords": [
+      "produtividade",
+      "organização",
+      "IA",
+      "tarefas",
+      "objetivos",
+      "eficiência"
+    ]
+  },
+  "script": {
+    "script_id": "script_1698293518",
+    "title": "Transforme Seu Estilo de Vida em 30 Dias!",
+    "duration_seconds": 30,
+    "scenes": [
+      {
+        "scene_number": 1,
+        "duration": 5,
+        "time_range": "00:00-00:05",
+        "visual_description": "Uma pessoa olhando para o espelho com uma expressão de insatisfação.",
+        "narration": "Você está cansado de se sentir assim?",
+        "on_screen_text": "CANSADO DE SE SENTIR ASSIM?",
+        "keywords": [
+          "frustration",
+          "reflection",
+          "self-improvement"
+        ],
+        "mood": "Urgente e reflexivo"
+      },
+      {
+        "scene_number": 2,
+        "duration": 5,
+        "time_range": "00:05-00:10",
+        "visual_description": "Cenas de uma pessoa se exercitando, preparando comida saudável e meditando.",
+        "narration": "É hora de mudar! Em apenas 30 dias, você pode transformar seu corpo e mente.",
+        "on_screen_text": "TRANSFORME-SE EM 30 DIAS!",
+        "keywords": [
+          "fitness",
+          "healthy food",
+          "meditation"
+        ],
+        "mood": "Inspirador e motivador"
+      },
+      {
+        "scene_number": 3,
+        "duration": 5,
+        "time_range": "00:10-00:15",
+        "visual_description": "Montagem rápida de antes e depois, mostrando resultados visíveis.",
+        "narration": "Veja resultados reais e duradouros!",
+        "on_screen_text": "RESULTADOS REAIS!",
+        "keywords": [
+          "before and after",
+          "results",
+          "transformation"
+        ],
+        "mood": "Animado e encorajador"
+      },
+      {
+        "scene_number": 4,
+        "duration": 5,
+        "time_range": "00:15-00:20",
+        "visual_description": "Grupo de pessoas felizes e motivadas, celebrando suas conquistas.",
+        "narration": "Junte-se a uma comunidade de vencedores!",
+        "on_screen_text": "JUNTE-SE A NÓS!",
+        "keywords": [
+          "community",
+          "celebration",
+          "achievement"
+        ],
+        "mood": "Feliz e acolhedor"
+      },
+      {
+        "scene_number": 5,
+        "duration": 10,
+        "time_range": "00:20-00:30",
+        "visual_description": "Tela final com informações de contato e chamada para ação.",
+        "narration": "Comece sua jornada hoje! Acesse nosso site e inscreva-se agora!",
+        "on_screen_text": "INSCRIÇÃO ABERTA! VISITE NOSSO SITE.",
+        "keywords": [
+          "call to action",
+          "join us",
+          "enrollment"
+        ],
+        "mood": "Urgente e motivacional"
+      }
+    ],
+    "narration_full": "Você está cansado de se sentir assim? É hora de mudar! Em apenas 30 dias, você pode transformar seu corpo e mente. Veja resultados reais e duradouros! Junte-se a uma comunidade de vencedores! Comece sua jornada hoje! Acesse nosso site e inscreva-se agora!",
+    "music_style": "Música motivacional e energética",
+    "estimated_word_count": 50,
+    "generated_at": "2025-11-19T15:34:56.386371",
+    "model": "openai/gpt-4o-mini-2024-07-18"
+  },
+  "visual_plan": {
+    "visual_plan_id": "visual_20251119_153456",
+    "scenes": [
+      {
+        "scene_number": 1,
+        "media_path": "https://videos.pexels.com/video-files/34748892/14731297_1280_720_30fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Urgente e reflexivo",
+        "cost": 0.0,
+        "keywords": "disappointed reflection mirror"
+      },
+      {
+        "scene_number": 2,
+        "media_path": "https://videos.pexels.com/video-files/6785305/6785305-hd_1280_720_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Inspirador e motivador",
+        "cost": 0.0,
+        "keywords": "fitness healthy living meditation wellbeing"
+      },
+      {
+        "scene_number": 3,
+        "media_path": "https://videos.pexels.com/video-files/4125972/4125972-hd_1366_720_50fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Animado e encorajador",
+        "cost": 0.0,
+        "keywords": "before after transformation results"
+      },
+      {
+        "scene_number": 4,
+        "media_path": "https://videos.pexels.com/video-files/8145135/8145135-hd_1280_720_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Feliz e acolhedor",
+        "cost": 0.0,
+        "keywords": "people celebrating success happy team"
+      },
+      {
+        "scene_number": 5,
+        "media_path": "https://videos.pexels.com/video-files/8165662/8165662-uhd_4096_2160_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 10,
+        "mood": "Urgente e motivacional",
+        "cost": 0.0,
+        "keywords": "call to action contact information screen"
+      }
+    ],
+    "generated_at": "2025-11-19T15:34:56.710749"
+  },
+  "stats": {
+    "total_scenes": 5,
+    "pexels_scenes": 5,
+    "stability_scenes": 0,
+    "total_cost": 0.0,
+    "pexels_percentage": 100.0
+  },
+  "timestamp": "2025-11-19T15:35:05.910608"
+}

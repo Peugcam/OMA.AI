@@ -28,18 +28,21 @@ OMA (Orquestrador Multi-Agente) is a **production-ready** multi-agent system tha
 ## 🎯 AI Models
 
 **All via OpenRouter API:**
-- Script Agent: GPT-4o-mini
-- Visual Agent: GPT-4o-mini
-- Audio Agent: Llama 3.2 3B
-- Editor Agent: Claude 3 Haiku
-- Supervisor: Qwen 2.5 7B
+- **Supervisor:** Qwen 2.5 7B Instruct ($0.09/1M tokens) - Task planning
+- **Script Agent:** Phi-3.5 Mini 128k ($0.10/1M) - Creative writing
+- **Visual Agent:** Gemma 2 9B IT ($0.20/1M) - Visual description
+- **Audio Agent:** Mistral 7B Instruct ($0.06/1M) - Audio planning
+- **Editor Agent:** Llama 3.2 3B ($0.06/1M) - Video editing
 
-**Local Models (Optional - Pendrive):**
-- Only 2 models for testing/development
-- Can use API for everything instead
-- Not required for production
+**Cost per video:** ~$0.0007 (less than 1 cent!)
+
+**Local Model (Optional):**
+- Gemma 2 9B - Only useful local model for offline testing
+- All production work via OpenRouter API
 
 **Total: 200+ models available via OpenRouter!**
+
+See [MODELS_REFERENCE.md](MODELS_REFERENCE.md) for detailed info.
 
 ## 🚀 Quick Start
 

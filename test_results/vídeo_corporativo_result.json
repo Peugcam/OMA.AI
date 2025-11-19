@@ -1,0 +1,181 @@
+{
+  "test_name": "Vídeo Corporativo",
+  "timestamp": "2025-11-19T15:22:48.213297",
+  "brief": {
+    "title": "OMA.AI - Plataforma de Criação de Vídeos",
+    "description": "\n    Vídeo promocional mostrando a OMA.AI como solução para criação de vídeos com IA.\n\n    Estrutura:\n    - Abertura: Pessoa frustrada tentando criar vídeo manualmente\n    - Problema: Custo alto de produção de vídeo\n    - Solução: Logo OMA.AI aparecendo de forma impactante\n    - Benefício: Equipe feliz usando a plataforma\n    ",
+    "duration": 30,
+    "target_audience": "Empresas e criadores de conteúdo",
+    "style": "profissional e moderno",
+    "mood": "inspirador e tecnológico"
+  },
+  "script": {
+    "script_id": "script_1698230400",
+    "title": "Transforme Seu Cotidiano em 30 Segundos",
+    "duration_seconds": 30,
+    "scenes": [
+      {
+        "scene_number": 1,
+        "duration": 5,
+        "time_range": "00:00-00:05",
+        "visual_description": "Um close em uma pessoa olhando para o céu, com expressão de dúvida e desejo.",
+        "narration": "Você já se perguntou se está vivendo seu potencial máximo?",
+        "on_screen_text": "Viva seu Potencial!",
+        "keywords": [
+          "potential",
+          "motivation",
+          "inspiration"
+        ],
+        "mood": "Reflexivo e inspirador"
+      },
+      {
+        "scene_number": 2,
+        "duration": 5,
+        "time_range": "00:05-00:10",
+        "visual_description": "Imagens de pessoas em diferentes atividades: estudando, praticando esportes, criando arte.",
+        "narration": "A vida é feita de escolhas. Cada passo conta.",
+        "on_screen_text": "Cada Passo Importa",
+        "keywords": [
+          "choices",
+          "lifestyle",
+          "growth"
+        ],
+        "mood": "Dinâmico e positivo"
+      },
+      {
+        "scene_number": 3,
+        "duration": 5,
+        "time_range": "00:10-00:15",
+        "visual_description": "Um grupo de amigos se divertindo e apoiando uns aos outros.",
+        "narration": "Cerque-se de quem te impulsiona a ser melhor.",
+        "on_screen_text": "Estímulo e Apoio",
+        "keywords": [
+          "support",
+          "friends",
+          "community"
+        ],
+        "mood": "Alegre e motivacional"
+      },
+      {
+        "scene_number": 4,
+        "duration": 5,
+        "time_range": "00:15-00:20",
+        "visual_description": "Uma pessoa escrevendo em um caderno, com uma expressão determinada.",
+        "narration": "Defina suas metas e faça acontecer.",
+        "on_screen_text": "Defina Suas Metas!",
+        "keywords": [
+          "goals",
+          "determination",
+          "success"
+        ],
+        "mood": "Focado e aspiracional"
+      },
+      {
+        "scene_number": 5,
+        "duration": 5,
+        "time_range": "00:20-00:25",
+        "visual_description": "Imagens de transformação: de esboços a obras completas, de ideias a ações.",
+        "narration": "A mudança começa com você. Não espere mais!",
+        "on_screen_text": "A Hora é Agora!",
+        "keywords": [
+          "change",
+          "action",
+          "transformation"
+        ],
+        "mood": "Urgente e empoderador"
+      },
+      {
+        "scene_number": 6,
+        "duration": 5,
+        "time_range": "00:25-00:30",
+        "visual_description": "Um convite visual para o público, com um botão de ação destacado.",
+        "narration": "Clique no link e dê o primeiro passo hoje!",
+        "on_screen_text": "Clique Aqui!",
+        "keywords": [
+          "call to action",
+          "engagement",
+          "join us"
+        ],
+        "mood": "Encerramento encorajador"
+      }
+    ],
+    "narration_full": "Você já se perguntou se está vivendo seu potencial máximo? A vida é feita de escolhas. Cada passo conta. Cerque-se de quem te impulsiona a ser melhor. Defina suas metas e faça acontecer. A mudança começa com você. Não espere mais! Clique no link e dê o primeiro passo hoje!",
+    "music_style": "Música inspiradora e motivacional",
+    "estimated_word_count": 45,
+    "generated_at": "2025-11-19T15:22:37.223686",
+    "model": "openai/gpt-4o-mini-2024-07-18"
+  },
+  "visual_plan": {
+    "visual_plan_id": "visual_20251119_152237",
+    "scenes": [
+      {
+        "scene_number": 1,
+        "media_path": "https://videos.pexels.com/video-files/4870890/4870890-hd_1920_1080_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Reflexivo e inspirador",
+        "cost": 0.0,
+        "keywords": "person looking sky thoughtful desire"
+      },
+      {
+        "scene_number": 2,
+        "media_path": "https://videos.pexels.com/video-files/6023427/6023427-uhd_2560_1440_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Dinâmico e positivo",
+        "cost": 0.0,
+        "keywords": "people activities lifestyle positive"
+      },
+      {
+        "scene_number": 3,
+        "media_path": "https://videos.pexels.com/video-files/5616686/5616686-hd_1920_1080_25fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Alegre e motivacional",
+        "cost": 0.0,
+        "keywords": "friends support happiness together"
+      },
+      {
+        "scene_number": 4,
+        "media_path": "https://videos.pexels.com/video-files/32246885/13752762_1280_720_24fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Focado e aspiracional",
+        "cost": 0.0,
+        "keywords": "person writing notebook focused determination"
+      },
+      {
+        "scene_number": 5,
+        "media_path": "https://videos.pexels.com/video-files/4125972/4125972-hd_1366_720_50fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Urgente e empoderador",
+        "cost": 0.0,
+        "keywords": "transformation process creation action"
+      },
+      {
+        "scene_number": 6,
+        "media_path": "https://videos.pexels.com/video-files/4196235/4196235-hd_1280_720_24fps.mp4",
+        "media_type": "video",
+        "source": "pexels",
+        "duration": 5,
+        "mood": "Encerramento encorajador",
+        "cost": 0.0,
+        "keywords": "call to action button encourage"
+      }
+    ],
+    "generated_at": "2025-11-19T15:22:37.587276"
+  },
+  "statistics": {
+    "total_scenes": 6,
+    "pexels_count": 6,
+    "stability_count": 0,
+    "total_cost": 0.0,
+    "pexels_rate": 1.0
+  }
+}
