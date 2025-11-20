@@ -1,12 +1,34 @@
 {
   "name": "oma-refactored-analysis",
-  "version": "1.0.0",
-  "description": "Code analysis tools for OMA project",
+  "version": "2.0.0",
+  "description": "Comprehensive code quality analysis tools for OMA project",
   "scripts": {
+    "check:all": "python run_quality_checks.py",
+    "check:all:fix": "python run_quality_checks.py --fix",
+    "check:all:verbose": "python run_quality_checks.py --verbose",
     "check:duplicates": "jscpd .",
     "check:duplicates:watch": "nodemon --watch . --ext py --exec \"npm run check:duplicates\"",
     "check:duplicates:ci": "jscpd . --exitCode 1",
-    "report": "jscpd . && open reports/jscpd/html/index.html"
+    "check:format": "black --check --diff .",
+    "check:format:fix": "black .",
+    "check:imports": "isort --check-only --diff .",
+    "check:imports:fix": "isort .",
+    "check:lint:pylint": "pylint --rcfile=.pylintrc --load-plugins=pylint_custom_checkers agents/ core/ mcp/",
+    "check:lint:flake8": "flake8 .",
+    "check:types": "mypy agents/ core/ mcp/ --config-file=pyproject.toml",
+    "check:security": "bandit -c .bandit.yaml -r agents/ core/ mcp/",
+    "check:complexity": "radon cc . --min B --show-complexity",
+    "check:maintainability": "radon mi . --min B --show",
+    "check:deadcode": "vulture . --min-confidence 80",
+    "pre-commit:install": "pre-commit install",
+    "pre-commit:run": "pre-commit run --all-files",
+    "pre-commit:update": "pre-commit autoupdate",
+    "report:duplicates": "jscpd . && open reports/jscpd/html/index.html",
+    "report:coverage": "pytest --cov=. --cov-report=html && open reports/coverage/index.html",
+    "test": "pytest -v",
+    "test:watch": "pytest-watch",
+    "clean": "find . -type d -name __pycache__ -exec rm -rf {} + && find . -type d -name .pytest_cache -exec rm -rf {} + && find . -type d -name .mypy_cache -exec rm -rf {} + && rm -rf reports/",
+    "setup": "pip install -r requirements_analysis.txt && npm install && pre-commit install"
   },
   "devDependencies": {
     "jscpd": "^4.0.5",
@@ -14,9 +36,16 @@
   },
   "keywords": [
     "code-analysis",
+    "code-quality",
     "duplicate-detection",
+    "linting",
+    "static-analysis",
     "python"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
 }

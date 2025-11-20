@@ -30,6 +30,13 @@ async def generate_video(briefing: dict) -> dict:
         Dict com video_path, metadata, cost
     """
 
+    # DEBUG: Print briefing recebido
+    print("\n" + "="*70)
+    print("📥 QUICK_GENERATE - Briefing Recebido:")
+    print("="*70)
+    print(json.dumps(briefing, indent=2, ensure_ascii=False))
+    print("="*70 + "\n")
+
     # Estado inicial
     state = {
         "brief": briefing,
@@ -38,10 +45,21 @@ async def generate_video(briefing: dict) -> dict:
         "current_phase": 0
     }
 
+    print(f"📊 Estado inicial criado: task_id={state['task_id']}")
+    print(f"📋 Briefing no state: {state['brief'].get('title', 'N/A')}\n")
+
     try:
         # Fase 1: Análise
         supervisor = SupervisorAgent()
-        state = await supervisor.analyze_request(state)
+
+        # DEBUG: Verificar briefing antes de passar
+        print(f"🔍 Passando briefing para supervisor:")
+        print(f"   Título: {state['brief'].get('title', 'N/A')}")
+        print(f"   Descrição: {state['brief'].get('description', 'N/A')[:100]}...\n")
+
+        # Passar apenas o brief (não o state inteiro)
+        analysis = await supervisor.analyze_request(state["brief"])
+        state["analysis"] = analysis
 
         # Fase 2: Roteiro
         script_agent = ScriptAgent()

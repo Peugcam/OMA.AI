@@ -58,6 +58,12 @@ htmlcov/
 .pytest_cache/
 .mypy_cache/
 .pylint.d/
+.ruff_cache/
+.radon/
+.bandit/
+
+# Pre-commit
+.pre-commit-config.yaml.swp
 
 # Node.js (for jscpd)
 node_modules/

@@ -27,6 +27,14 @@ mccabe==0.7.0
 vulture==2.13  # Find dead code
 pyflakes==3.2.0  # Fast static analysis
 pydocstyle==6.3.0  # Docstring checker
+pylint-plugin-utils==0.8.2  # Pylint plugin utilities
+flake8-bugbear==24.10.31  # Find likely bugs and design problems
+flake8-comprehensions==3.15.0  # Better list/set/dict comprehensions
+flake8-simplify==0.21.0  # Suggest code simplifications
+flake8-docstrings==1.7.0  # Docstring conventions
+flake8-annotations==3.1.1  # Type annotations checker
+pycodestyle==2.12.1  # Style guide enforcement
+pep8-naming==0.14.1  # Check PEP 8 naming conventions
 
 # Testing Framework (100% GRATUITO)
 pytest==8.3.3
