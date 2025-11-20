@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # OMA API Service
+  # ============================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: oma-api:latest
+    container_name: oma-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Application
+      - APP_NAME=OMA Video Generation API
+      - APP_VERSION=1.0.0
+      - ENVIRONMENT=development
+      - DEBUG=true
+
+      # API
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_PREFIX=/api/v1
+
+      # OpenAI (set in .env)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=gpt-4
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FILE=/app/logs/api.log
+      - LOG_FORMAT=json
+
+      # Rate Limiting
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_PER_MINUTE=10
+      - RATE_LIMIT_PER_HOUR=100
+
+      # Paths
+      - OUTPUT_DIR=/app/outputs/videos
+      - TEMP_DIR=/app/temp
+
+    volumes:
+      # Persist logs
+      - ./logs:/app/logs
+      # Persist generated videos
+      - ./outputs:/app/outputs
+      # Temp files
+      - ./temp:/app/temp
+      # Mount .env for local development
+      - ./.env:/app/.env:ro
+
+    networks:
+      - oma-network
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/v1/ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    labels:
+      - "com.oma.service=api"
+      - "com.oma.version=1.0.0"
+
+  # ============================================
+  # Gradio Dashboard (Optional)
+  # ============================================
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: oma-api:latest
+    container_name: oma-dashboard
+    restart: unless-stopped
+    ports:
+      - "7861:7861"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./logs:/app/logs
+      - ./outputs:/app/outputs
+      - ./.env:/app/.env:ro
+    networks:
+      - oma-network
+    command: ["python", "video_dashboard_complete.py"]
+    labels:
+      - "com.oma.service=dashboard"
+      - "com.oma.version=1.0.0"
+    depends_on:
+      - api
+
+  # ============================================
+  # Redis (Optional - for production caching)
+  # ============================================
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: oma-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - oma-network
+  #   command: redis-server --appendonly yes
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  # ============================================
+  # PostgreSQL (Optional - for production DB)
+  # ============================================
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: oma-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_USER=oma
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD}
+  #     - POSTGRES_DB=oma
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - oma-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U oma"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+networks:
+  oma-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
