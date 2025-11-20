@@ -5,6 +5,7 @@ Especializado em criar roteiros criativos e engajantes para videos curtos.
 Usa GPT-4o-mini para maxima criatividade e qualidade.
 """
 
+import json
 import logging
 from typing import Dict, Any
 from datetime import datetime
