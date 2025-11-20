@@ -34,12 +34,17 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# BRIEFING - OMA APP
+# BRIEFING - DINAMICO (pode ser customizado via argumento)
 # ============================================================================
 
-BRIEFING = {
-    "title": "OMA - Produtividade com IA",
-    "description": """
+def create_briefing(theme=None):
+    """Cria briefing baseado no tema fornecido"""
+
+    if not theme:
+        # Briefing padrão - OMA APP
+        return {
+            "title": "OMA - Produtividade com IA",
+            "description": """
 Anúncio moderno e impactante para o OMA App de Produtividade:
 
 **ESTRUTURA:**
@@ -52,25 +57,54 @@ Anúncio moderno e impactante para o OMA App de Produtividade:
 
 **MENSAGEM:** Organize sua vida. Conquiste objetivos. Seja produtivo com IA.
 """,
-    "duration": 30,
-    "target_audience": "Profissionais 25-40 anos",
-    "style": "modern, tech, motivational",
-    "tone": "inspirational",
-    "cta": "Baixe o OMA grátis agora!",
-}
+            "duration": 30,
+            "target_audience": "Profissionais 25-40 anos",
+            "style": "modern, tech, motivational",
+            "tone": "inspirational",
+            "cta": "Baixe o OMA grátis agora!",
+        }
+    else:
+        # Briefing customizado baseado no tema
+        return {
+            "title": theme,
+            "description": f"""
+Crie um vídeo promocional impactante sobre: {theme}
+
+**ESTRUTURA:**
+1. Apresente o problema ou necessidade
+2. Mostre a dor ou frustração atual
+3. Introduza a solução (produto/serviço)
+4. Demonstre a transformação positiva
+5. Destaque os principais benefícios
+6. Call-to-action claro e direto
+
+**MENSAGEM:** Comunique o valor principal de forma clara e persuasiva.
+""",
+            "duration": 30,
+            "target_audience": "Público geral",
+            "style": "modern, engaging, professional",
+            "tone": "persuasive",
+            "cta": "Saiba mais agora!",
+        }
 
 
 # ============================================================================
 # PIPELINE COMPLETO
 # ============================================================================
 
-async def generate_complete_video():
+async def generate_complete_video(theme=None):
     """
     Executa pipeline completo de geração de vídeo
+
+    Args:
+        theme: Tema customizado para o vídeo (opcional)
     """
 
+    # Criar briefing baseado no tema
+    briefing = create_briefing(theme)
+
     logger.info("="*70)
-    logger.info("🎬 PIPELINE COMPLETO - ANÚNCIO OMA APP")
+    logger.info(f"🎬 PIPELINE COMPLETO - {briefing['title']}")
     logger.info("="*70)
     logger.info("")
 
@@ -80,7 +114,7 @@ async def generate_complete_video():
 
     # Estado inicial
     state = {
-        "brief": BRIEFING,
+        "brief": briefing,
         "task_id": f"oma_full_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
         "created_at": datetime.now().isoformat(),
         "current_phase": 0
@@ -188,7 +222,7 @@ async def generate_complete_video():
         result_path = output_dir / f"oma_app_full_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(result_path, 'w', encoding='utf-8') as f:
             json.dump({
-                "briefing": BRIEFING,
+                "briefing": briefing,
                 "video_path": str(video_path),
                 "metadata": metadata,
                 "stats": {
@@ -215,9 +249,19 @@ async def generate_complete_video():
 # ============================================================================
 
 if __name__ == "__main__":
+    import sys
+
+    # Verificar se foi fornecido um tema
+    theme = None
+    if len(sys.argv) > 1:
+        theme = " ".join(sys.argv[1:])
+
     print("\n")
     print("="*70)
-    print(">> INICIANDO GERACAO COMPLETA DO VIDEO OMA APP")
+    if theme:
+        print(f">> GERANDO VIDEO: {theme}")
+    else:
+        print(">> INICIANDO GERACAO COMPLETA DO VIDEO OMA APP")
     print("="*70)
     print("\n")
     print("Tempo estimado: 2-3 minutos")
@@ -233,7 +277,7 @@ if __name__ == "__main__":
     print("="*70)
     print("\n")
 
-    success, video_path = asyncio.run(generate_complete_video())
+    success, video_path = asyncio.run(generate_complete_video(theme))
 
     if success:
         print("\n")

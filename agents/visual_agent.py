@@ -231,6 +231,22 @@ class VisualAgent:
             "pexels" ou "stability"
         """
         try:
+            # PRIMEIRO: Checar keywords ANTES de chamar LLM (evita custos e erros)
+            desc_lower = description.lower()
+
+            # Palavras que indicam PESSOAS (sempre Pexels) - PRIORIDADE MÁXIMA
+            people_keywords = ['pessoa', 'pessoas', 'rosto', 'mão', 'mãos', 'equipe',
+                               'grupo', 'trabalhando', 'sorrindo', 'olhando', 'reunião',
+                               'professor', 'estudante', 'apresentador', 'instrutor',
+                               'explicando', 'ensinando', 'aula', 'palestra', 'apresentação',
+                               'homem', 'mulher', 'jovem', 'adulto', 'criança',
+                               'falando', 'conversando', 'interagindo', 'gesticulando']
+
+            # Checar pessoas ANTES de chamar LLM
+            if any(keyword in desc_lower for keyword in people_keywords):
+                self.logger.info(f"✅ KEYWORD MATCH: Palavra de PESSOA detectada → FORÇANDO PEXELS")
+                return "pexels"
+
             classification_prompt = f"""Classifique esta cena de vídeo como "pexels" ou "stability".
 
 DESCRIÇÃO DA CENA: {description}
@@ -243,25 +259,29 @@ REGRAS CRÍTICAS:
 ✅ Expressões faciais, emoções humanas
 ✅ Interações entre pessoas (reunião, conversa, aperto de mãos)
 ✅ Pessoas em ação (trabalhando, digitando, caminhando, apresentando)
+✅ Conteúdo educativo (professor, instrutor, apresentador, palestrante)
+✅ Aulas, apresentações, explicações, demonstrações
 ✅ Close-ups de pessoas
-✅ Lugares comuns (escritório, café, rua, natureza, casa)
+✅ Lugares comuns (escritório, café, rua, natureza, casa, sala de aula)
 ✅ Objetos cotidianos com pessoas (laptop sendo usado, telefone na mão)
+✅ Qualquer situação envolvendo humanos
 
-"stability" = APENAS para cenas SEM pessoas/rostos:
-✅ Logos e branding (sem pessoas)
-✅ Ambientes vazios futuristas
-✅ Conceitos abstratos (tecnologia holográfica, visualizações de dados)
-✅ Produtos sozinhos (sem mãos segurando)
-✅ Paisagens conceituais
-✅ Arte abstrata
-✅ Objetos impossíveis de filmar
+"stability" = APENAS para cenas SEM pessoas/rostos/humanos:
+✅ Logos e branding (flutuando sozinhos, sem mãos)
+✅ Ambientes vazios futuristas (SEM pessoas)
+✅ Conceitos abstratos puros (partículas, hologramas SEM humanos)
+✅ Produtos sozinhos (NUNCA com mãos segurando)
+✅ Paisagens conceituais vazias
+✅ Arte abstrata sem figuras humanas
+✅ Objetos impossíveis de filmar no mundo real
 
 CRÍTICO:
-- Se mencionar "pessoa", "rosto", "mão", "sorriso", "olhar" → SEMPRE "pexels"
+- Se mencionar "pessoa", "professor", "instrutor", "apresentador", "rosto", "mão", "sorriso", "olhar", "explicando", "ensinando", "falando" → SEMPRE "pexels"
+- Conteúdo educativo/didático SEMPRE tem pessoas → SEMPRE "pexels"
 - Stability AI gera rostos DEFORMADOS e mãos com dedos extras 😱
-- Apenas use "stability" se NÃO tiver humanos na cena
+- Apenas use "stability" se for 100% certeza de NÃO ter humanos
 
-IMPORTANTE: Na dúvida, escolha "pexels" (vídeos reais são sempre melhores).
+IMPORTANTE: Na dúvida, escolha "pexels" (vídeos reais são sempre melhores e mais seguros).
 
 Responda APENAS com uma palavra: pexels ou stability"""
 
@@ -291,24 +311,29 @@ Responda APENAS com uma palavra: pexels ou stability"""
 
                 # Palavras que indicam PESSOAS (sempre Pexels)
                 people_keywords = ['pessoa', 'pessoas', 'rosto', 'mão', 'mãos', 'equipe',
-                                   'grupo', 'trabalhando', 'sorrindo', 'olhando', 'reunião']
+                                   'grupo', 'trabalhando', 'sorrindo', 'olhando', 'reunião',
+                                   'professor', 'estudante', 'apresentador', 'instrutor',
+                                   'explicando', 'ensinando', 'aula', 'palestra', 'apresentação',
+                                   'homem', 'mulher', 'jovem', 'adulto', 'criança',
+                                   'falando', 'conversando', 'interagindo', 'gesticulando']
 
-                # Palavras que indicam ABSTRATO (Stability)
-                abstract_keywords = ['logo', 'holográfico', 'digital', 'abstrato', 'visualização',
-                                     'conceito', 'futurista', 'partículas', 'cérebro digital']
+                # Palavras que indicam ABSTRATO (Stability) - SEM pessoas
+                abstract_keywords = ['logo', 'holográfico', 'digital abstrato', 'visualização de dados',
+                                     'conceito puro', 'futurista vazio', 'partículas flutuando',
+                                     'cérebro digital', 'holograma flutuante', 'ambiente vazio']
 
                 # Checar pessoas primeiro
                 if any(keyword in desc_lower for keyword in people_keywords):
-                    self.logger.info(f"Detectou palavra-chave de PESSOA, forçando pexels")
+                    self.logger.info(f"✅ Detectou palavra-chave de PESSOA, forçando pexels")
                     return "pexels"
 
-                # Checar abstrato
+                # Checar abstrato (APENAS se não tiver pessoas)
                 if any(keyword in desc_lower for keyword in abstract_keywords):
-                    self.logger.info(f"Detectou palavra-chave ABSTRATA, forçando stability")
+                    self.logger.info(f"🎨 Detectou palavra-chave ABSTRATA (sem pessoas), forçando stability")
                     return "stability"
 
                 # Default: pexels (vídeos reais preferíveis)
-                self.logger.warning(f"Classificação ambígua: '{classification}', usando pexels (default)")
+                self.logger.warning(f"⚠️ Classificação ambígua: '{classification}', usando pexels (default seguro)")
                 return "pexels"
 
         except Exception as e:
