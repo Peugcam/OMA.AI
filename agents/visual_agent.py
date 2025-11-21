@@ -106,11 +106,13 @@ class VisualAgent:
             "generated_at": datetime.now().isoformat()
         }
 
-        for scene in scenes:
-            self.logger.info(f"Processando cena {scene['scene_number']}...")
+        total_scenes = len(scenes)
+        for i, scene in enumerate(scenes):
+            is_last_scene = (i == total_scenes - 1)
+            self.logger.info(f"Processando cena {scene['scene_number']}{'(ÚLTIMA - usar Stability)' if is_last_scene else ''}...")
 
             # Gerar imagem para a cena
-            visual_scene = await self._generate_scene_visual(scene, state)
+            visual_scene = await self._generate_scene_visual(scene, state, is_last_scene=is_last_scene)
 
             visual_plan["scenes"].append(visual_scene)
 
@@ -126,7 +128,8 @@ class VisualAgent:
     async def _generate_scene_visual(
         self,
         scene: Dict[str, Any],
-        state: Dict[str, Any]
+        state: Dict[str, Any],
+        is_last_scene: bool = False
     ) -> Dict[str, Any]:
         """
         Gera conteúdo visual para uma cena usando estratégia híbrida.
@@ -145,13 +148,32 @@ class VisualAgent:
             Dados visuais da cena com source e custo
         """
         scene_num = scene.get("scene_number", 1)
+
+        # PROTEÇÃO ROBUSTA: Extrair descrição de múltiplos campos possíveis
         description = scene.get("visual_description", "")
+        if not description or not description.strip():
+            # Tentar narration como fallback
+            description = scene.get("narration", "")
+        if not description or not description.strip():
+            # Tentar on_screen_text como fallback
+            description = scene.get("on_screen_text", "")
+        if not description or not description.strip():
+            # Último fallback: usar keywords
+            keywords = scene.get("keywords", [])
+            if keywords:
+                description = " ".join(keywords) if isinstance(keywords, list) else str(keywords)
+
         mood = scene.get("mood", "neutral")
 
-        self.logger.info(f"🎬 Cena {scene_num}: {description[:60]}...")
+        self.logger.info(f"🎬 Cena {scene_num}: {description[:60] if description else 'SEM DESCRIÇÃO'}...")
 
         # STEP 1: Classificar tipo de cena
-        scene_type = await self._classify_scene_type(description, mood)
+        # REGRA ESPECIAL: Última cena SEMPRE usa Stability AI (CTA com logo/arte)
+        if is_last_scene:
+            scene_type = "stability"
+            self.logger.info(f"🎯 ÚLTIMA CENA → Forçando Stability AI (CTA/logo)")
+        else:
+            scene_type = await self._classify_scene_type(description, mood)
         self.logger.info(f"📊 Classificação: {scene_type}")
 
         # STEP 2: Executar estratégia apropriada
@@ -181,7 +203,14 @@ class VisualAgent:
         # STEP 3: Usar Stability AI (cena específica OU fallback)
         if self.stability_api_key:
             try:
+                # IMPORTANTE: Garantir prompt em inglês para Stability AI
                 prompt = await self._create_image_prompt(description, mood, state)
+
+                # PROTEÇÃO: Se prompt parece estar em português, traduzir
+                if any(pt_word in prompt.lower() for pt_word in ['pessoa', 'equipe', 'escritório', 'reunião', 'trabalho', 'apresentação']):
+                    self.logger.info("🔄 Detectado português no prompt, traduzindo para inglês...")
+                    prompt = await self._translate_to_english(prompt)
+
                 image_path = self._generate_with_stability(prompt, scene_num)
 
                 cost = 0.04  # SDXL 1024x1024
@@ -230,6 +259,11 @@ class VisualAgent:
         Returns:
             "pexels" ou "stability"
         """
+        # PROTEÇÃO: Se descrição vazia, usar pexels (default seguro)
+        if not description or not description.strip():
+            self.logger.warning(f"⚠️ Descrição vazia, usando pexels (default seguro)")
+            return "pexels"
+
         try:
             # PRIMEIRO: Checar keywords ANTES de chamar LLM (evita custos e erros)
             desc_lower = description.lower()
@@ -476,6 +510,20 @@ Responda APENAS com uma palavra: pexels ou stability"""
         Returns:
             Keywords em inglês para Pexels
         """
+        # PROTEÇÃO: Se descrição vazia, usar fallback baseado no mood
+        if not description or not description.strip():
+            self.logger.warning("⚠️ Descrição vazia, usando keywords baseadas no mood")
+            mood_keywords = {
+                "energetico": "dynamic business professional team",
+                "energético": "dynamic business professional team",
+                "confiante": "confident business professional success",
+                "motivador": "motivation success achievement team",
+                "calm": "peaceful calm serene nature",
+                "professional": "business professional office corporate",
+                "neutral": "business office modern professional"
+            }
+            return mood_keywords.get(mood.lower(), "business professional modern")
+
         try:
             prompt = f"""Gere keywords em inglês para buscar vídeo no Pexels.
 
@@ -503,12 +551,17 @@ Responda APENAS com as keywords (sem aspas, sem explicação):"""
 
             keywords = response.strip().strip('"').strip("'")
 
+            # PROTEÇÃO: Se resposta vazia, usar fallback
+            if not keywords or len(keywords) < 3:
+                self.logger.warning("⚠️ Keywords vazias do LLM, usando fallback")
+                return "business professional modern office"
+
             return keywords
 
         except Exception as e:
             self.logger.error(f"Erro ao gerar keywords: {e}")
-            # Fallback: tradução simples
-            return description[:50]
+            # Fallback: keywords genéricas em inglês
+            return "business professional modern office"
 
 
     async def _create_image_prompt(
@@ -774,6 +827,11 @@ Retorne APENAS o prompt melhorado (sem aspas, sem explicação):"""
         Returns:
             Texto traduzido para inglês
         """
+        # PROTEÇÃO: Se texto vazio, retornar fallback
+        if not text or not text.strip():
+            self.logger.warning("⚠️ Texto vazio para tradução, usando fallback")
+            return "professional business modern clean high quality"
+
         try:
             translation = await self.llm.chat(
                 messages=[{
@@ -787,12 +845,17 @@ Retorne APENAS o prompt melhorado (sem aspas, sem explicação):"""
             # Limpar resposta (remover aspas, etc)
             translation = translation.strip().strip('"').strip("'")
 
+            # PROTEÇÃO: Se tradução vazia, usar fallback
+            if not translation or len(translation) < 5:
+                self.logger.warning("⚠️ Tradução vazia, usando fallback")
+                return "professional business modern clean high quality"
+
             return translation
 
         except Exception as e:
             self.logger.error(f"Erro ao traduzir: {e}")
-            # Fallback: retornar original (melhor que falhar)
-            return text
+            # Fallback: prompt genérico em inglês
+            return "professional business modern clean high quality 4k"
 
 
     def _generate_with_stability(self, prompt: str, scene_num: int) -> Path:

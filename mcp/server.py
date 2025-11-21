@@ -8,8 +8,8 @@ import json
 from typing import Dict, Any, List, Optional
 
 from core.ai_client_mcp import AIClientMCP
-from .tools import search_pexels_video, generate_stability_image, AVAILABLE_TOOLS
-from .schemas import VisualResult, PexelsSearchResult, StabilityImageResult
+from .tools import search_pexels_video, generate_stability_image, generate_hybrid_visual, AVAILABLE_TOOLS
+from .schemas import VisualResult, PexelsSearchResult, StabilityImageResult, HybridVisualResult
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,8 @@ class MCPVisualServer:
         # Tool functions
         self.tool_functions = {
             "search_pexels_video": search_pexels_video,
-            "generate_stability_image": generate_stability_image
+            "generate_stability_image": generate_stability_image,
+            "generate_hybrid_visual": generate_hybrid_visual
         }
 
         self.logger.info(f"MCP Visual Server inicializado (modelo: {model_name}, MCP enabled)")
@@ -150,14 +151,26 @@ Choose the appropriate tool and execute it."""
         """
         return """You are a visual content expert specializing in choosing the right media source.
 
-Your task: Analyze scene descriptions and choose between:
-- search_pexels_video: For real-world footage (people, actions, places)
-- generate_stability_image: For conceptual visuals (logos, abstract, futuristic)
+Your task: Analyze scene descriptions and choose between THREE tools:
 
-KEY RULE: ALWAYS use Pexels for any scene with people/faces/humans.
-Stability AI generates deformed humans - only use for non-human content.
+1. search_pexels_video: For real-world footage (people, actions, places)
+   - ALWAYS use for scenes with people, faces, hands, human actions
+   - Examples: "person working", "team meeting", "teacher explaining"
 
-Make your choice based on the scene description and execute the tool immediately."""
+2. generate_stability_image: For conceptual visuals (logos, abstract, futuristic)
+   - ONLY use for scenes WITHOUT any people/humans
+   - Examples: "floating logo", "abstract data visualization", "empty futuristic city"
+
+3. generate_hybrid_visual: For scenes with BOTH people AND digital elements
+   - Use when scene combines real humans with abstract/digital overlay
+   - Examples: "person presenting chart", "team with company logo", "office with hologram"
+
+KEY RULES:
+- NEVER use Stability for people/faces - it generates DEFORMED humans
+- When in doubt, use Pexels (real footage is safer)
+- Use hybrid when scene clearly needs both real video AND digital overlay
+
+Make your choice and execute the appropriate tool immediately."""
 
 
     def _format_tools_for_openrouter(self) -> List[Dict[str, Any]]:
@@ -251,37 +264,129 @@ Make your choice based on the scene description and execute the tool immediately
             raise ValueError(f"Tool desconhecido: {tool_name}")
 
 
-    def _extract_keywords_from_response(self, response: str) -> str:
-        """Extrai keywords de response de fallback"""
-        # Implementação simples - melhorar se necessário
-        return "business professional office"
+    def _extract_keywords_from_response(self, response: str, context: str = "") -> str:
+        """
+        Extrai keywords de response de fallback COM CONTEXTO.
+
+        Args:
+            response: Resposta do LLM
+            context: Descricao original da cena para contexto
+
+        Returns:
+            Keywords relevantes para Pexels
+        """
+        # Mapeamento PT -> EN para keywords comuns
+        pt_to_en = {
+            'pessoa': 'person', 'pessoas': 'people', 'trabalhando': 'working',
+            'escritorio': 'office', 'reuniao': 'meeting', 'equipe': 'team',
+            'laptop': 'laptop', 'computador': 'computer', 'apresentando': 'presenting',
+            'professor': 'teacher', 'estudante': 'student', 'aula': 'classroom',
+            'tecnologia': 'technology', 'negocio': 'business', 'corporativo': 'corporate',
+            'moderno': 'modern', 'profissional': 'professional', 'digital': 'digital'
+        }
+
+        # Usar contexto se disponivel
+        text = context if context else response
+
+        # Extrair palavras e traduzir
+        words = text.lower().split()
+        keywords = []
+
+        for word in words:
+            # Remover pontuacao
+            clean_word = ''.join(c for c in word if c.isalnum())
+            if clean_word in pt_to_en:
+                keywords.append(pt_to_en[clean_word])
+            elif len(clean_word) > 3 and clean_word.isascii():
+                keywords.append(clean_word)
+
+        # Limitar a 5 keywords
+        if keywords:
+            return ' '.join(keywords[:5])
+
+        # Fallback baseado em padroes comuns
+        if any(p in text.lower() for p in ['pessoa', 'trabalhando', 'equipe']):
+            return "person working office professional"
+        elif any(p in text.lower() for p in ['tecnologia', 'digital', 'dados']):
+            return "technology digital modern business"
+        else:
+            return "business professional modern"
 
 
-    def _extract_prompt_from_response(self, response: str) -> str:
-        """Extrai prompt de response de fallback"""
-        # Implementação simples - melhorar se necessário
-        return "modern abstract concept, high quality"
+    def _extract_prompt_from_response(self, response: str, context: str = "") -> str:
+        """
+        Extrai prompt de response de fallback COM CONTEXTO.
+
+        Args:
+            response: Resposta do LLM
+            context: Descricao original da cena para contexto
+
+        Returns:
+            Prompt relevante para Stability
+        """
+        # Usar contexto se disponivel
+        text = context if context else response
+
+        # Detectar tipo de conteudo abstrato
+        if any(p in text.lower() for p in ['logo', 'marca', 'brand']):
+            return "modern minimalist logo, professional design, blue gradient, clean lines, high quality, 4k"
+        elif any(p in text.lower() for p in ['holograma', 'hologram', 'digital']):
+            return "holographic display, futuristic technology, glowing blue particles, sci-fi style, high quality"
+        elif any(p in text.lower() for p in ['dados', 'data', 'grafico', 'chart']):
+            return "abstract data visualization, flowing particles, blue and cyan colors, modern tech style, 4k"
+        elif any(p in text.lower() for p in ['futurista', 'futuristic', 'espacial']):
+            return "futuristic empty environment, sci-fi architecture, blue lighting, no people, cinematic"
+        else:
+            return "modern abstract concept, professional design, blue tones, high quality, 4k"
 
 
     def _fallback_to_pexels(self, description: str) -> PexelsSearchResult:
         """
-        Fallback: usa Pexels quando tool calling falha.
+        Fallback contextual: usa Pexels quando tool calling falha.
+
+        Usa contexto da descricao para gerar keywords relevantes.
 
         Args:
-            description: Descrição da cena
+            description: Descricao original da cena
 
         Returns:
             PexelsSearchResult
         """
-        self.logger.warning("Usando fallback para Pexels")
+        self.logger.warning(f"Usando fallback contextual para Pexels (desc: {description[:50]}...)")
 
-        # Gerar keywords simples
-        keywords = description[:50].replace("pessoa", "person").replace("trabalhando", "working")
+        # Gerar keywords baseadas no contexto
+        keywords = self._extract_keywords_from_response("", context=description)
+
+        self.logger.info(f"Keywords de fallback: '{keywords}'")
 
         try:
             return search_pexels_video(keywords=keywords)
         except Exception as e:
             self.logger.error(f"Fallback Pexels falhou: {e}")
+            raise
+
+
+    def _fallback_to_stability(self, description: str) -> StabilityImageResult:
+        """
+        Fallback contextual: usa Stability quando Pexels falha para cenas abstratas.
+
+        Args:
+            description: Descricao original da cena
+
+        Returns:
+            StabilityImageResult
+        """
+        self.logger.warning(f"Usando fallback contextual para Stability (desc: {description[:50]}...)")
+
+        # Gerar prompt baseado no contexto
+        prompt = self._extract_prompt_from_response("", context=description)
+
+        self.logger.info(f"Prompt de fallback: '{prompt[:60]}...'")
+
+        try:
+            return generate_stability_image(prompt=prompt)
+        except Exception as e:
+            self.logger.error(f"Fallback Stability falhou: {e}")
             raise
 
 

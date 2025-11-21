@@ -368,39 +368,42 @@ Retorne o roteiro melhorado no MESMO formato JSON do original."""
         """
         self.logger.info("Usando roteiro fallback...")
 
+        # Garantir que description não está vazia
+        safe_description = description if description and description.strip() else "Apresentação profissional de produto ou serviço inovador"
+
         return {
             "script_id": f"fallback_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "title": description[:50],
+            "title": safe_description[:50],
             "duration_seconds": duration,
             "scenes": [
                 {
                     "scene_number": 1,
                     "duration": 5,
                     "time_range": "00:00-00:05",
-                    "visual_description": "Abertura chamativa",
-                    "narration": description[:100],
-                    "on_screen_text": description[:30],
-                    "keywords": ["modern", "professional", "clean"],
+                    "visual_description": "Pessoa trabalhando em escritório moderno com laptop",
+                    "narration": safe_description[:100],
+                    "on_screen_text": safe_description[:30],
+                    "keywords": ["person", "working", "laptop", "office"],
                     "mood": "energetico"
                 },
                 {
                     "scene_number": 2,
                     "duration": duration - 10,
                     "time_range": f"00:05-00:{duration-5:02d}",
-                    "visual_description": "Conteudo principal",
-                    "narration": description,
+                    "visual_description": "Equipe profissional em reunião colaborativa",
+                    "narration": safe_description,
                     "on_screen_text": "",
-                    "keywords": ["business", "quality", "professional"],
+                    "keywords": ["team", "meeting", "business", "professional"],
                     "mood": "confiante"
                 },
                 {
                     "scene_number": 3,
                     "duration": 5,
                     "time_range": f"00:{duration-5:02d}-00:{duration:02d}",
-                    "visual_description": "Call-to-action final",
-                    "narration": cta,
-                    "on_screen_text": cta,
-                    "keywords": ["action", "call", "contact"],
+                    "visual_description": "Pessoa sorrindo apresentando resultado positivo",
+                    "narration": cta if cta else "Entre em contato conosco!",
+                    "on_screen_text": cta if cta else "Saiba mais!",
+                    "keywords": ["success", "happy", "presentation", "results"],
                     "mood": "motivador"
                 }
             ],

@@ -170,15 +170,82 @@ class GenerateStabilityInput(BaseModel):
 
 
 # ============================================================================
+# HYBRID VISUAL RESULT (Pexels + Stability combinados)
+# ============================================================================
+
+class HybridVisualResult(BaseModel):
+    """
+    Resultado hibrido: Video Pexels + Imagem Stability para overlay.
+
+    Casos de uso:
+    - Pessoa apresentando + grafico de dados (overlay)
+    - Equipe reunida + logo da empresa (overlay)
+    - Escritorio + holograma futurista (overlay)
+
+    O editor combina:
+    1. Video Pexels como fundo
+    2. Imagem Stability como overlay (transparente ou canto)
+    """
+    success: bool = True
+    source: Literal["both"] = "both"
+
+    # Pexels (video de fundo)
+    video_id: int
+    video_url: HttpUrl
+    video_local_path: Optional[str] = None
+    video_width: int
+    video_height: int
+    video_duration: int
+    video_keywords: str
+
+    # Stability (imagem overlay - gerada em 1024x1024, redimensionada no editor)
+    image_path: str
+    image_prompt: str
+    image_width: int = 1024
+    image_height: int = 1024
+
+    # Configuracao do overlay
+    overlay_position: Literal["top-right", "bottom-right", "top-left", "bottom-left", "center"] = "bottom-right"
+    overlay_opacity: float = Field(default=0.9, ge=0.0, le=1.0)
+    overlay_scale: float = Field(default=0.25, ge=0.1, le=0.5)  # 25% do tamanho do video
+
+    # Custo total
+    cost: float = 0.04  # Pexels gratis + Stability $0.04
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "source": "both",
+                "video_id": 8088078,
+                "video_url": "https://videos.pexels.com/...",
+                "video_local_path": "C:/Users/paulo/OneDrive/Desktop/OMA_Videos/pexels_videos/pexels_8088078.mp4",
+                "video_width": 1920,
+                "video_height": 1080,
+                "video_duration": 15,
+                "video_keywords": "team meeting presentation",
+                "image_path": "C:/Users/paulo/OneDrive/Desktop/OMA_Videos/images/overlay_logo.png",
+                "image_prompt": "modern tech company logo, minimalist, blue gradient",
+                "image_width": 512,
+                "image_height": 512,
+                "overlay_position": "bottom-right",
+                "overlay_opacity": 0.9,
+                "overlay_scale": 0.25,
+                "cost": 0.04
+            }
+        }
+
+
+# ============================================================================
 # UNIFIED VISUAL RESULT (Union Type)
 # ============================================================================
 
 from typing import Union
 
-VisualResult = Union[PexelsSearchResult, StabilityImageResult]
+VisualResult = Union[PexelsSearchResult, StabilityImageResult, HybridVisualResult]
 
 """
-Este Union type permite que o LLM retorne um dos dois tipos,
+Este Union type permite que o LLM retorne um dos tres tipos,
 garantindo type safety em qualquer caso.
 
 Uso:
@@ -187,7 +254,63 @@ Uso:
     if result.source == "pexels":
         # result é PexelsSearchResult
         video_path = result.local_path
-    else:
+
+    elif result.source == "stability_ai":
         # result é StabilityImageResult
         image_path = result.image_path
+
+    elif result.source == "both":
+        # result é HybridVisualResult
+        video_path = result.video_local_path
+        overlay_path = result.image_path
+        # Editor combina video + overlay
 """
+
+
+# ============================================================================
+# INPUT SCHEMA PARA HYBRID
+# ============================================================================
+
+class GenerateHybridInput(BaseModel):
+    """Input para geracao hibrida (Pexels + Stability)"""
+
+    # Para Pexels (video de fundo)
+    video_keywords: str = Field(
+        ...,
+        description="Keywords em ingles para buscar video no Pexels",
+        min_length=3,
+        max_length=100
+    )
+    video_orientation: Literal["landscape", "portrait", "square"] = Field(
+        default="landscape",
+        description="Orientacao do video"
+    )
+
+    # Para Stability (overlay)
+    overlay_prompt: str = Field(
+        ...,
+        description="Prompt para gerar imagem de overlay",
+        min_length=10,
+        max_length=300
+    )
+    overlay_position: Literal["top-right", "bottom-right", "top-left", "bottom-left", "center"] = Field(
+        default="bottom-right",
+        description="Posicao do overlay no video"
+    )
+    overlay_scale: float = Field(
+        default=0.25,
+        ge=0.1,
+        le=0.5,
+        description="Escala do overlay (0.1-0.5 do tamanho do video)"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "video_keywords": "team meeting presentation business",
+                "video_orientation": "landscape",
+                "overlay_prompt": "modern company logo, minimalist design, blue gradient, professional",
+                "overlay_position": "bottom-right",
+                "overlay_scale": 0.25
+            }
+        }

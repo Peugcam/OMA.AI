@@ -186,22 +186,53 @@ class EditorAgent:
                 if media_type == "video":
                     temp_video = temp_dir / f"scene_{i:02d}.mp4"
 
-                    cmd = [
-                        "ffmpeg",
-                        "-y",
-                        "-i", str(media_path),
-                        "-t", str(duration),
-                        "-c:v", "libx264",
-                        "-preset", "fast",
-                        "-crf", "23",
-                        "-vf", "scale=1280:720",
-                        "-an",  # Sem áudio
-                        str(temp_video)
+                    # Primeiro verificar duração do vídeo source
+                    probe_cmd = [
+                        "ffprobe", "-v", "error",
+                        "-show_entries", "format=duration",
+                        "-of", "default=noprint_wrappers=1:nokey=1",
+                        str(media_path)
                     ]
+                    probe_result = subprocess.run(probe_cmd, capture_output=True, text=True)
+                    source_duration = float(probe_result.stdout.strip() or duration)
+
+                    # Se vídeo source é mais curto que duração desejada, fazer loop
+                    if source_duration < duration:
+                        self.logger.info(f"⚠️ Vídeo source ({source_duration}s) menor que duração ({duration}s), aplicando loop")
+                        cmd = [
+                            "ffmpeg",
+                            "-y",
+                            "-stream_loop", "-1",  # Loop infinito
+                            "-i", str(media_path),
+                            "-t", str(duration),  # Cortar na duração exata
+                            "-c:v", "libx264",
+                            "-preset", "fast",
+                            "-crf", "23",
+                            "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2",
+                            "-pix_fmt", "yuv420p",
+                            "-r", "30",
+                            "-an",  # Sem áudio
+                            str(temp_video)
+                        ]
+                    else:
+                        cmd = [
+                            "ffmpeg",
+                            "-y",
+                            "-i", str(media_path),
+                            "-t", str(duration),
+                            "-c:v", "libx264",
+                            "-preset", "fast",
+                            "-crf", "23",
+                            "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2",
+                            "-pix_fmt", "yuv420p",
+                            "-r", "30",
+                            "-an",  # Sem áudio
+                            str(temp_video)
+                        ]
 
                     subprocess.run(cmd, check=True, capture_output=True)
                     temp_videos.append(temp_video)
-                    self.logger.info(f"✅ Vídeo {i+1} processado")
+                    self.logger.info(f"✅ Vídeo {i+1} processado ({duration}s)")
                     continue
 
                 # Se é imagem, criar vídeo da imagem
@@ -254,11 +285,16 @@ class EditorAgent:
                 str(output_path)
             ]
 
+            # Calcular duração total do vídeo concatenado
+            total_video_duration = sum(scene.get("duration", 5) for scene in scenes)
+            self.logger.info(f"Duração total do vídeo: {total_video_duration}s")
+
             # Adicionar áudio se disponível
             narration_file = audio_files.get("final_mix") or audio_files.get("narration_file")
 
             if narration_file and narration_file != "placeholder" and Path(narration_file).exists():
-                # Recriar comando com áudio
+                # Recriar comando com áudio - SEM -shortest para evitar freeze
+                # Usar -t para definir duração exata do output
                 cmd = [
                     "ffmpeg",
                     "-y",
@@ -266,9 +302,10 @@ class EditorAgent:
                     "-safe", "0",
                     "-i", str(concat_file),
                     "-i", str(narration_file),
+                    "-t", str(total_video_duration),  # Duração exata do vídeo
                     "-c:v", "copy",
                     "-c:a", "aac",
-                    "-shortest",  # Terminar quando o mais curto acabar
+                    "-af", f"apad=whole_dur={total_video_duration}",  # Pad áudio se mais curto
                     str(output_path)
                 ]
 

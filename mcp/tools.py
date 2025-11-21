@@ -13,8 +13,10 @@ from typing import Optional
 from .schemas import (
     PexelsSearchResult,
     StabilityImageResult,
+    HybridVisualResult,
     SearchPexelsInput,
-    GenerateStabilityInput
+    GenerateStabilityInput,
+    GenerateHybridInput
 )
 
 
@@ -290,18 +292,118 @@ def generate_stability_image(
 
 
 # ============================================================================
+# HYBRID TOOL (Pexels + Stability combinados)
+# ============================================================================
+
+def generate_hybrid_visual(
+    video_keywords: str,
+    overlay_prompt: str,
+    video_orientation: str = "landscape",
+    overlay_position: str = "bottom-right",
+    overlay_scale: float = 0.25
+) -> HybridVisualResult:
+    """
+    Generate hybrid visual: Pexels video + Stability overlay.
+
+    Use this tool for scenes that combine:
+    - Real people/actions (video from Pexels)
+    - Digital/abstract elements (image from Stability for overlay)
+
+    Examples:
+    - "Person presenting data charts" → video of person + chart overlay
+    - "Team meeting with company logo" → video of team + logo overlay
+    - "Office with holographic display" → video of office + hologram overlay
+
+    Args:
+        video_keywords: Keywords for Pexels video search (English)
+        overlay_prompt: Prompt for Stability AI overlay image
+        video_orientation: Video orientation (landscape/portrait/square)
+        overlay_position: Where to place overlay (top-right, bottom-right, etc)
+        overlay_scale: Overlay size relative to video (0.1-0.5)
+
+    Returns:
+        HybridVisualResult with video and overlay paths
+
+    Raises:
+        Exception: If either API fails
+    """
+    logger.info(f"[MCP TOOL] generate_hybrid_visual: video='{video_keywords}', overlay='{overlay_prompt[:40]}...'")
+
+    # Validar input
+    input_data = GenerateHybridInput(
+        video_keywords=video_keywords,
+        video_orientation=video_orientation,
+        overlay_prompt=overlay_prompt,
+        overlay_position=overlay_position,
+        overlay_scale=overlay_scale
+    )
+
+    # PASSO 1: Buscar video no Pexels
+    logger.info("Hybrid Step 1: Buscando video Pexels...")
+    pexels_result = search_pexels_video(
+        keywords=input_data.video_keywords,
+        orientation=input_data.video_orientation
+    )
+
+    # PASSO 2: Gerar imagem overlay com Stability
+    logger.info("Hybrid Step 2: Gerando overlay Stability...")
+
+    # SDXL requer dimensoes especificas - usar 1024x1024 (sera redimensionado depois)
+    # Dimensoes permitidas: 1024x1024, 1152x896, 1216x832, 1344x768, 1536x640
+    stability_result = generate_stability_image(
+        prompt=input_data.overlay_prompt + ", transparent background, clean edges, suitable for overlay, centered composition",
+        width=1024,
+        height=1024,
+        cfg_scale=8.0,  # Mais aderencia ao prompt para overlays
+        negative_prompt="background, scenery, complex scene, people, faces, blurry edges, cluttered"
+    )
+
+    logger.info(f"OK - Hybrid visual completo: video={pexels_result.video_id}, overlay={stability_result.image_path}")
+
+    # Retornar resultado combinado
+    return HybridVisualResult(
+        # Video (Pexels)
+        video_id=pexels_result.video_id,
+        video_url=pexels_result.video_url,
+        video_local_path=pexels_result.local_path,
+        video_width=pexels_result.width,
+        video_height=pexels_result.height,
+        video_duration=pexels_result.duration,
+        video_keywords=pexels_result.keywords,
+
+        # Overlay (Stability)
+        image_path=stability_result.image_path,
+        image_prompt=stability_result.prompt_used,
+        image_width=stability_result.width,
+        image_height=stability_result.height,
+
+        # Config
+        overlay_position=input_data.overlay_position,
+        overlay_scale=input_data.overlay_scale,
+
+        # Custo total
+        cost=pexels_result.cost + stability_result.cost  # 0 + 0.04 = 0.04
+    )
+
+
+# ============================================================================
 # TOOL REGISTRY (para MCP server)
 # ============================================================================
 
 AVAILABLE_TOOLS = {
     "search_pexels_video": {
         "function": search_pexels_video,
-        "description": "Search Pexels for real stock videos (people, actions, places). Use for any scene with humans or real-world footage.",
+        "description": "Search Pexels for real stock videos (people, actions, places). Use for any scene with humans or real-world footage. ALWAYS use this for scenes with people.",
         "parameters": SearchPexelsInput.model_json_schema()
     },
     "generate_stability_image": {
         "function": generate_stability_image,
-        "description": "Generate conceptual images with Stability AI (logos, abstract, futuristic). NEVER use for people/faces - Stability generates deformed humans.",
+        "description": "Generate conceptual images with Stability AI (logos, abstract, futuristic). NEVER use for people/faces - Stability generates deformed humans. Only use for scenes WITHOUT humans.",
         "parameters": GenerateStabilityInput.model_json_schema()
+    },
+    "generate_hybrid_visual": {
+        "function": generate_hybrid_visual,
+        "description": "Generate hybrid visual: Pexels video (background) + Stability image (overlay). Use when scene has BOTH real people AND digital/abstract elements (e.g., 'person presenting chart', 'team with logo').",
+        "parameters": GenerateHybridInput.model_json_schema()
     }
 }

@@ -12,6 +12,7 @@ from core.ai_client import AIClient, AIClientFactory
 from core.router import SmartRouter
 from core.prompts import PromptTemplates, PromptBuilder
 from core.validators import ResponseValidator, VideoStateValidator
+from core.scene_classifier import SceneClassifier, ClassificationResult
 
 __all__ = [
     # AI Client
@@ -28,6 +29,10 @@ __all__ = [
     # Validators
     "ResponseValidator",
     "VideoStateValidator",
+
+    # Scene Classifier (novo)
+    "SceneClassifier",
+    "ClassificationResult",
 ]
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"  # Bump version for V2 visual integration
