@@ -1,3 +1,15 @@
+---
+title: OMA Video Generator
+emoji: 🎬
+colorFrom: purple
+colorTo: blue
+sdk: gradio
+sdk_version: 4.44.1
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # 🎬 OMA.AI - Multi-Agent Video Creation Platform
 
 > Enterprise-grade video automation with AI agents - **16-45x cheaper** than AWS/Azure/Google Cloud!

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: oma-video-generator
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: standard  # standard tem mais RAM para TTS/FFmpeg
+    region: oregon
+    healthCheckPath: /
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: PEXELS_API_KEY
+        sync: false
+      - key: STABILITY_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: PORT
+        value: 7860
+      - key: GRADIO_SERVER_NAME
+        value: "0.0.0.0"
+      - key: PYTHONUNBUFFERED
+        value: "1"
