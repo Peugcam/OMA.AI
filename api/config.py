@@ -7,9 +7,22 @@ Environment-based configuration with validation.
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from functools import lru_cache
+
+
+# Get base directory (project root)
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def get_cors_origins() -> List[str]:
+    """Get CORS origins from environment or defaults"""
+    cors_env = os.environ.get("CORS_ORIGINS", "")
+    if cors_env:
+        return [origin.strip() for origin in cors_env.split(",")]
+    return ["http://localhost:7861", "http://localhost:3000"]
 
 
 class Settings(BaseSettings):
@@ -25,7 +38,7 @@ class Settings(BaseSettings):
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
     API_PREFIX: str = "/api/v1"
-    CORS_ORIGINS: list[str] = ["http://localhost:7861", "http://localhost:3000"]
+    CORS_ORIGINS: List[str] = ["http://localhost:7861", "http://localhost:3000", "*"]
 
     # Rate Limiting
     RATE_LIMIT_ENABLED: bool = True
@@ -36,25 +49,26 @@ class Settings(BaseSettings):
     MAX_VIDEO_DURATION: int = 180  # seconds
     MIN_VIDEO_DURATION: int = 15   # seconds
     DEFAULT_VIDEO_DURATION: int = 30
-    OUTPUT_DIR: Path = Path("./outputs/videos")
-    TEMP_DIR: Path = Path("./temp")
+    OUTPUT_DIR: Path = BASE_DIR / "outputs" / "videos"
+    TEMP_DIR: Path = BASE_DIR / "temp"
 
-    # OpenAI
+    # OpenAI / OpenRouter
     OPENAI_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
     OPENAI_MODEL: str = "gpt-4"
     OPENAI_MAX_TOKENS: int = 4000
     OPENAI_TEMPERATURE: float = 0.7
 
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-    LOG_FILE: Optional[Path] = Path("./logs/api.log")
+    LOG_FILE: Optional[Path] = BASE_DIR / "logs" / "api.log"
     LOG_FORMAT: str = "json"  # json or text
     LOG_ROTATION: str = "100 MB"  # Size-based rotation
 
     # Security
-    SECRET_KEY: str = "CHANGE_THIS_IN_PRODUCTION"  # For JWT signing
+    SECRET_KEY: str = os.environ.get("SECRET_KEY", "CHANGE_THIS_IN_PRODUCTION")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    ALLOWED_HOSTS: list[str] = ["*"]
+    ALLOWED_HOSTS: List[str] = ["*"]
 
     # Background Tasks
     MAX_CONCURRENT_GENERATIONS: int = 3
@@ -66,8 +80,8 @@ class Settings(BaseSettings):
 
     # File Storage
     MAX_UPLOAD_SIZE_MB: int = 100
-    ALLOWED_VIDEO_FORMATS: list[str] = ["mp4", "mov", "avi"]
-    ALLOWED_IMAGE_FORMATS: list[str] = ["jpg", "jpeg", "png", "webp"]
+    ALLOWED_VIDEO_FORMATS: List[str] = ["mp4", "mov", "avi"]
+    ALLOWED_IMAGE_FORMATS: List[str] = ["jpg", "jpeg", "png", "webp"]
 
     model_config = SettingsConfigDict(
         env_file=".env",

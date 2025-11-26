@@ -1,0 +1,184 @@
+# ============================================================================
+# Docker Compose - Development Environment
+# Local testing before cloud deployment
+# ============================================================================
+
+version: '3.9'
+
+services:
+  # Dashboard/Web Interface
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: oma-dashboard
+    ports:
+      - "7860:7860"
+    environment:
+      # API Keys (use .env file in production)
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      PEXELS_API_KEY: ${PEXELS_API_KEY}
+      STABILITY_API_KEY: ${STABILITY_API_KEY:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      # Service discovery
+      REDIS_URL: redis://redis:6379
+      # Config
+      PORT: 7860
+      ENVIRONMENT: development
+      DEBUG: "true"
+      LOG_LEVEL: INFO
+    volumes:
+      # Persist outputs locally
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+      # Hot reload for development
+      - ./app.py:/app/app.py
+      - ./video_dashboard_complete.py:/app/video_dashboard_complete.py
+      - ./agents:/app/agents
+      - ./core:/app/core
+    networks:
+      - oma-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    labels:
+      - "com.oma.service=dashboard"
+      - "com.oma.environment=development"
+
+  # Media Processing Agent (FFmpeg heavy)
+  media-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.media
+    container_name: oma-media-agent
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      PEXELS_API_KEY: ${PEXELS_API_KEY}
+      REDIS_URL: redis://redis:6379
+      FFMPEG_THREADS: 4
+      WORKER_MODE: "true"
+      LOG_LEVEL: INFO
+    volumes:
+      - ./outputs:/app/outputs
+      - media-temp:/app/outputs/temp
+      # Hot reload for development
+      - ./agents:/app/agents
+      - ./core:/app/core
+    networks:
+      - oma-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    # Resource limits for local testing
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    labels:
+      - "com.oma.service=media-agent"
+      - "com.oma.environment=development"
+
+  # Redis for job queue and caching
+  redis:
+    image: redis:7-alpine
+    container_name: oma-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - oma-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    labels:
+      - "com.oma.service=redis"
+      - "com.oma.environment=development"
+
+  # Optional: Redis Commander for debugging queue
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: oma-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    networks:
+      - oma-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    profiles:
+      - debug
+    labels:
+      - "com.oma.service=redis-commander"
+      - "com.oma.environment=development"
+
+  # Optional: Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: oma-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - oma-network
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    profiles:
+      - monitoring
+    labels:
+      - "com.oma.service=prometheus"
+      - "com.oma.environment=development"
+
+  # Optional: Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: oma-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: redis-datasource
+      GF_SERVER_ROOT_URL: http://localhost:3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - oma-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    labels:
+      - "com.oma.service=grafana"
+      - "com.oma.environment=development"
+
+networks:
+  oma-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+  media-temp:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local

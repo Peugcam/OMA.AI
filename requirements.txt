@@ -15,6 +15,7 @@ langchain-core==0.3.5
 # LLM Utils
 tiktoken==0.7.0
 pydantic==2.9.2
+pydantic-settings>=2.0.0
 
 # Media Processing
 ffmpeg-python==0.2.0
@@ -38,6 +39,8 @@ tqdm==4.66.5
 python-multipart==0.0.12
 requests==2.32.3
 aiofiles==24.1.0
+slowapi>=0.1.9
+loguru>=0.7.0
 
 # ============================================================================
 # NOTA: TTS local (Coqui) foi removido para deploy em cloud

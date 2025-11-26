@@ -1,0 +1,164 @@
+# ============================================================================
+# Prometheus Alert Rules for OMA.AI
+# ============================================================================
+
+groups:
+  # ============================================================================
+  # Infrastructure Alerts
+  # ============================================================================
+  - name: infrastructure
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "{{ $labels.instance }} CPU usage is {{ $value }}%"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "{{ $labels.instance }} memory usage is {{ $value }}%"
+
+      - alert: DiskSpaceRunningOut
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 15
+        for: 10m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Disk space running out"
+          description: "{{ $labels.instance }} has only {{ $value }}% free disk space"
+
+  # ============================================================================
+  # Application Alerts
+  # ============================================================================
+  - name: application
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} requests/second"
+
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Slow response time (P95)"
+          description: "95th percentile response time is {{ $value }}s"
+
+      - alert: VideoGenerationFailing
+        expr: rate(video_generation_failures_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: media-agent
+        annotations:
+          summary: "Video generation failing"
+          description: "{{ $value }} video generation failures per second"
+
+  # ============================================================================
+  # Queue & Redis Alerts
+  # ============================================================================
+  - name: queue
+    interval: 30s
+    rules:
+      - alert: HighQueueDepth
+        expr: redis_queue_depth > 50
+        for: 10m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "High queue depth"
+          description: "Redis queue has {{ $value }} pending jobs"
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance {{ $labels.instance }} is unreachable"
+
+      - alert: RedisHighMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis is using {{ $value }}% of available memory"
+
+  # ============================================================================
+  # Cost & Billing Alerts
+  # ============================================================================
+  - name: cost
+    interval: 1h
+    rules:
+      - alert: HighDailyCost
+        expr: daily_cost_usd > 10
+        for: 1h
+        labels:
+          severity: warning
+          component: billing
+        annotations:
+          summary: "Daily cost exceeds threshold"
+          description: "Daily cost is ${{ $value }}"
+
+      - alert: UnusualAPIUsage
+        expr: rate(openrouter_api_calls_total[1h]) > 1000
+        for: 30m
+        labels:
+          severity: warning
+          component: billing
+        annotations:
+          summary: "Unusual API usage detected"
+          description: "{{ $value }} API calls per hour (possible abuse)"
+
+  # ============================================================================
+  # Database Alerts
+  # ============================================================================
+  - name: database
+    interval: 30s
+    rules:
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL instance is unreachable"
+
+      - alert: HighDatabaseConnections
+        expr: pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High number of database connections"
+          description: "{{ $value }} active connections to database"

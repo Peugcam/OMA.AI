@@ -1,0 +1,126 @@
+# ============================================================================
+# OMA Video Generation - Google Cloud Run Optimized Dockerfile
+# ============================================================================
+# Otimizado para Cloud Run com FFmpeg + TTS
+# Multi-stage build para imagem menor e deploy mais rápido
+# ============================================================================
+
+# ============================================
+# STAGE 1: Builder (compila dependências)
+# ============================================
+FROM python:3.11-slim-bookworm AS builder
+
+WORKDIR /build
+
+# Instalar dependências de build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements
+COPY requirements.txt .
+
+# Criar wheels pré-compilados (acelera instalação)
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+# ============================================
+# STAGE 2: Production (imagem final slim)
+# ============================================
+FROM python:3.11-slim-bookworm AS production
+
+# Metadata
+LABEL maintainer="OMA Team"
+LABEL version="3.0.0"
+LABEL description="OMA Video Generation - Cloud Run Edition"
+
+# Variáveis de ambiente
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONOPTIMIZE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    # Cloud Run define PORT automaticamente
+    GRADIO_SERVER_NAME=0.0.0.0 \
+    ENVIRONMENT=production \
+    # FFmpeg otimizações
+    FFMPEG_THREADS=2
+
+WORKDIR /app
+
+# ============================================
+# INSTALAR FFMPEG + DEPENDÊNCIAS DE SISTEMA
+# ============================================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # FFmpeg completo para processamento de vídeo
+    ffmpeg \
+    # Dependências de áudio (para Edge TTS/pydub)
+    libsndfile1 \
+    # Fontes para overlays/legendas
+    fonts-dejavu-core \
+    fonts-liberation \
+    # Utilitários
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && rm -rf /var/cache/apt/archives/*
+
+# Verificar FFmpeg instalado
+RUN ffmpeg -version && echo "FFmpeg OK!"
+
+# ============================================
+# INSTALAR DEPENDÊNCIAS PYTHON
+# ============================================
+# Copiar wheels pré-compilados do stage builder
+COPY --from=builder /wheels /wheels
+
+# Instalar todas as dependências (muito mais rápido com wheels)
+RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* \
+    && rm -rf /wheels
+
+# ============================================
+# COPIAR CÓDIGO DA APLICAÇÃO
+# ============================================
+# Copiar apenas o necessário (respeitar .dockerignore)
+COPY agents/ ./agents/
+COPY core/ ./core/
+COPY api/ ./api/
+COPY mcp/ ./mcp/
+COPY app.py run_api.py video_dashboard_complete.py ./
+COPY requirements.txt ./
+
+# ============================================
+# CRIAR DIRETÓRIOS E PERMISSÕES
+# ============================================
+RUN mkdir -p /app/logs /app/outputs/videos /app/outputs/temp /app/outputs/images /app/data \
+    && chmod -R 755 /app/logs /app/outputs /app/data
+
+# ============================================
+# USUÁRIO NÃO-ROOT (Segurança)
+# ============================================
+RUN useradd --create-home --shell /bin/bash --uid 1000 appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
+# ============================================
+# HEALTH CHECK
+# ============================================
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8080}/ || exit 1
+
+# ============================================
+# CONFIGURAÇÃO DE PORTA
+# ============================================
+# Cloud Run injeta PORT automaticamente (geralmente 8080)
+ENV PORT=8080
+EXPOSE ${PORT}
+
+# ============================================
+# COMANDO DE INICIALIZAÇÃO
+# ============================================
+# Gradio detecta PORT automaticamente
+CMD ["python", "app.py"]

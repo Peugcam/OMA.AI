@@ -302,6 +302,15 @@ Para gerar vídeos reais, você precisa:
 
         result = run_async(generate_video(briefing))
 
+        # DEBUG: Print result
+        print("\n" + "="*60)
+        print("📦 RESULTADO DA GERAÇÃO:")
+        print("="*60)
+        print(f"Success: {result.get('success')}")
+        print(f"Video Path: {result.get('video_path')}")
+        print(f"Error: {result.get('error', 'N/A')}")
+        print("="*60 + "\n")
+
         progress(1.0, desc="Concluído!")
 
         # Processar resultado
@@ -310,6 +319,12 @@ Para gerar vídeos reais, você precisa:
             cost = result.get("cost", 0)
             scenes = result.get("scenes", 0)
             metadata = result.get("metadata", {})
+
+            # Garantir path absoluto
+            if video_path:
+                video_path = str(Path(video_path).resolve())
+                print(f"📹 Video path absoluto: {video_path}")
+                print(f"📹 Existe? {Path(video_path).exists()}")
 
             success_msg = f"""
 ## ✅ VÍDEO GERADO COM SUCESSO!
@@ -326,7 +341,6 @@ Para gerar vídeos reais, você precisa:
 
 ### 📂 Localizações:
 1. `{video_path}`
-2. `outputs/videos/{Path(video_path).name if video_path else 'N/A'}`
 
 ### ⚡ Performance:
 - **Tempo total:** {metadata.get('generation_time', 'N/A')}s
@@ -343,8 +357,27 @@ Para gerar vídeos reais, você precisa:
             total_cost = sum([v.get('cost', 0) for v in get_video_history()])
             costs = f"Total investido hoje: ${total_cost:.4f}"
 
-            # Video path para preview (se existir)
-            video_preview = video_path if video_path and Path(video_path).exists() else None
+            # Video path para preview - SEMPRE usar path relativo para Gradio
+            video_preview = None
+            if video_path and Path(video_path).exists():
+                # Converter para path relativo (Gradio precisa disso)
+                try:
+                    rel_path = Path(video_path).relative_to(Path.cwd())
+                    video_preview = str(rel_path)
+                    print(f"✅ Preview habilitado (relativo): {video_preview}")
+                except ValueError:
+                    # Se não conseguir fazer relativo, usar absoluto mesmo
+                    video_preview = str(Path(video_path).resolve())
+                    print(f"✅ Preview habilitado (absoluto): {video_preview}")
+            else:
+                # Tentar encontrar o vídeo mais recente na pasta outputs
+                outputs_dir = Path("outputs/videos")
+                if outputs_dir.exists():
+                    videos = sorted(outputs_dir.glob("*.mp4"), key=lambda x: x.stat().st_mtime, reverse=True)
+                    if videos:
+                        # Path relativo
+                        video_preview = str(videos[0])
+                        print(f"✅ Preview via fallback (último vídeo relativo): {video_preview}")
 
             yield success_msg, video_preview, history, costs
 
@@ -643,16 +676,25 @@ if __name__ == "__main__":
 
     app = create_video_dashboard()
 
+    # Get port from environment variable (required for Railway, Render, Heroku)
+    PORT = int(os.environ.get("PORT", 7860))
+
+    print(f"🌐 Starting server on port {PORT}")
+
     # Launch dashboard
     app.launch(
         server_name="0.0.0.0",
-        server_port=7861,  # Porta diferente para não conflitar
+        server_port=PORT,
         share=False,
-        show_error=True,
-        inbrowser=True,  # Abre automaticamente no navegador
+        show_error=True,  # Show errors para debug
+        inbrowser=False,  # Don't open browser in production
         allowed_paths=[
-            "C:\\Users\\paulo\\OneDrive\\Desktop\\OMA_Videos",
-            "outputs/videos",
-            "."
-        ]  # Permitir acesso aos diretórios de vídeos
+            str(Path("outputs/videos").absolute()),
+            str(Path("outputs/temp").absolute()),
+            str(Path("outputs/images").absolute()),
+            str(Path(".").absolute())
+        ]
     )
+
+# Export for imports
+demo = create_video_dashboard()

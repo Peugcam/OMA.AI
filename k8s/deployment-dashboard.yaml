@@ -1,0 +1,253 @@
+# ============================================================================
+# Kubernetes Deployment - OMA Dashboard
+# Gradio web interface with HPA and advanced features
+# ============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: oma-production
+  labels:
+    name: oma-production
+    environment: production
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oma-dashboard-config
+  namespace: oma-production
+data:
+  PORT: "7860"
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  MAX_REQUESTS_PER_HOUR: "100"
+  MAX_CONCURRENT_REQUESTS: "10"
+  GRADIO_ANALYTICS_ENABLED: "false"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oma-dashboard
+  namespace: oma-production
+  labels:
+    app: oma
+    component: dashboard
+    tier: frontend
+    version: v1
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: oma
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        app: oma
+        component: dashboard
+        tier: frontend
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - dashboard
+              topologyKey: kubernetes.io/hostname
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+      - name: dashboard
+        image: gcr.io/PROJECT_ID/oma-dashboard:latest
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 7860
+          name: http
+          protocol: TCP
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: OPENROUTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: oma-secrets
+              key: openrouter-api-key
+        - name: PEXELS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: oma-secrets
+              key: pexels-api-key
+        - name: REDIS_URL
+          value: "redis://oma-redis-service:6379/0"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: oma-secrets
+              key: database-url
+
+        envFrom:
+        - configMapRef:
+            name: oma-dashboard-config
+
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+            ephemeral-storage: 2Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+            ephemeral-storage: 5Gi
+
+        volumeMounts:
+        - name: cache
+          mountPath: /app/cache
+        - name: temp
+          mountPath: /app/outputs/temp
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 7860
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 7860
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+
+      volumes:
+      - name: cache
+        emptyDir:
+          sizeLimit: 2Gi
+      - name: temp
+        emptyDir:
+          sizeLimit: 5Gi
+
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oma-dashboard-service
+  namespace: oma-production
+  labels:
+    app: oma
+    component: dashboard
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/backend-config: '{"default": "oma-backend-config"}'
+spec:
+  type: LoadBalancer
+  selector:
+    app: oma
+    component: dashboard
+  ports:
+  - port: 80
+    targetPort: 7860
+    protocol: TCP
+    name: http
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: oma-dashboard-hpa
+  namespace: oma-production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: oma-dashboard
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: oma-dashboard-pdb
+  namespace: oma-production
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: oma
+      component: dashboard

@@ -1,0 +1,33 @@
+# Simple working Dockerfile for OMA Dashboard
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy application
+COPY app.py video_dashboard_complete.py ./
+COPY agents/ ./agents/
+COPY core/ ./core/
+COPY mcp/ ./mcp/
+
+# Install Python packages (simplified, working versions)
+RUN pip install --no-cache-dir \
+    gradio==4.44.1 \
+    openai==1.54.5 \
+    httpx==0.27.2 \
+    pydantic==2.9.2 \
+    python-dotenv==1.0.1 \
+    loguru==0.7.2
+
+# Create directories
+RUN mkdir -p outputs/videos outputs/temp logs
+
+# Expose port
+EXPOSE 7860
+
+# Run
+CMD ["python", "app.py"]

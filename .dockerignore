@@ -1,90 +1,178 @@
-# Python
+# ============================================================================
+# .dockerignore - Optimized for OMA Docker builds
+# Reduces image size and build time by excluding unnecessary files
+# ============================================================================
+
+# Python artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+dist/
+build/
+*.whl
 
-# Testing
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+
+# Testing & Coverage
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
 .hypothesis/
+test_results/
+*.cover
+.cache
+nosetests.xml
+coverage.xml
 
-# IDE
+# IDE & Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
 
-# Environment
+# Environment & Secrets (CRITICAL - never include in images)
 .env
+.env.*
+*.env
 .env.local
-.env.*.local
+.env.production
+*.pem
+*.key
+credentials.json
+service-account.json
 
-# Logs
+# Logs (use volumes for persistence)
 logs/
 *.log
+*.log.*
 
-# Output files
+# Output files (use volumes for persistence)
 outputs/
 temp/
 OMA_Videos/
+videos/
+*.mp4
+*.avi
+*.mov
+*.mkv
 
 # Git
 .git/
 .gitignore
+.gitattributes
+.github/
 
-# Docker
-Dockerfile
-docker-compose.yml
+# Docker files (don't copy into container)
+Dockerfile*
+docker-compose*.yml
 .dockerignore
 
-# Documentation
+# Documentation (reduces image size)
 *.md
 docs/
+CHANGELOG*
+LICENSE
+CONTRIBUTING*
+README*
+*.rst
 
 # CI/CD
 .github/
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+cloudbuild.yaml
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Quality tools
+# Quality & Analysis tools (not needed in production)
 .flake8
 .pylintrc
 mypy.ini
+.mypy_cache/
 pyproject.toml
+.pre-commit-config.yaml
+.bandit.yaml
+.jscpd.json
+.editorconfig
+pylint_custom_checkers.py
 
-# Tests (don't include in production image)
+# Node modules (if any)
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Tests (not needed in production)
 tests/
+test_*.py
+*_test.py
+pytest.ini
 
 # Development scripts
-setup_api.bat
-restart_video_dashboard.bat
+setup_*.bat
+setup_*.sh
+*.bat
+RUN_*.bat
+FIND_AND_RUN.bat
+cleanup*.py
+cleanup*.bat
 
-# Large model files (if any)
+# Analysis & Reports
+reports/
+.analysis-status
+*_ANALYSIS.md
+*_SUMMARY.md
+*_GUIDE.md
+*_COMPARISON.md
+
+# Large model files (should be downloaded at runtime or mounted)
 *.pth
 *.ckpt
 *.safetensors
+*.bin
+models/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Screenshots & Images (use for docs only)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Backup files
+*.bak
+*.backup
+*.old
+*~
+
+# Database files (use volumes)
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+.tmp/
+.tmp.*/

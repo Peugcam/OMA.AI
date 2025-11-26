@@ -203,6 +203,21 @@ class VisualAgent:
         # STEP 3: Usar Stability AI (cena específica OU fallback)
         if self.stability_api_key:
             try:
+                # PROTEÇÃO CRÍTICA: Se tem pessoas, converter para cenário abstrato
+                people_keywords = ['person', 'people', 'face', 'hand', 'team', 'human',
+                                   'man', 'woman', 'teacher', 'student', 'professor',
+                                   'pessoa', 'pessoas', 'rosto', 'mão', 'equipe', 'humano',
+                                   'homem', 'mulher', 'professor', 'estudante', 'instrutor']
+
+                desc_lower = description.lower()
+                has_people = any(keyword in desc_lower for keyword in people_keywords)
+
+                if has_people:
+                    self.logger.warning("⚠️ Cena com PESSOAS detectada! Convertendo para cenário abstrato...")
+                    # Substituir por conceito abstrato relacionado ao tema
+                    description = f"Abstract concept visualization of {mood} learning environment, geometric shapes, floating books and screens, tech particles, no people"
+                    self.logger.info(f"✅ Nova descrição abstrata: {description}")
+
                 # IMPORTANTE: Garantir prompt em inglês para Stability AI
                 prompt = await self._create_image_prompt(description, mood, state)
 
@@ -269,16 +284,40 @@ class VisualAgent:
             desc_lower = description.lower()
 
             # Palavras que indicam PESSOAS (sempre Pexels) - PRIORIDADE MÁXIMA
-            people_keywords = ['pessoa', 'pessoas', 'rosto', 'mão', 'mãos', 'equipe',
-                               'grupo', 'trabalhando', 'sorrindo', 'olhando', 'reunião',
-                               'professor', 'estudante', 'apresentador', 'instrutor',
-                               'explicando', 'ensinando', 'aula', 'palestra', 'apresentação',
-                               'homem', 'mulher', 'jovem', 'adulto', 'criança',
-                               'falando', 'conversando', 'interagindo', 'gesticulando']
+            # Inclui português E inglês porque o LLM às vezes gera em inglês
+            people_keywords = [
+                # Português
+                'pessoa', 'pessoas', 'rosto', 'rostos', 'mão', 'mãos', 'equipe',
+                'grupo', 'trabalhando', 'sorrindo', 'sorriso', 'olhando', 'reunião',
+                'professor', 'professora', 'estudante', 'apresentador', 'instrutor',
+                'explicando', 'ensinando', 'aula', 'palestra', 'apresentação',
+                'homem', 'mulher', 'jovem', 'adulto', 'criança', 'profissional',
+                'falando', 'conversando', 'interagindo', 'gesticulando',
+                'digitando', 'usando', 'segurando', 'mostrando', 'demonstrando',
+                'feliz', 'animado', 'entusiasmado', 'confiante', 'produtivo',
+                'escritório', 'reunião', 'equipe', 'colaboração', 'trabalho',
+                'tutorial', 'educacional', 'didático', 'aprendendo', 'estudando',
+                # Inglês (caso LLM gere em inglês)
+                'person', 'people', 'face', 'faces', 'hand', 'hands', 'team',
+                'smiling', 'smile', 'looking', 'working', 'talking', 'speaking',
+                'teacher', 'student', 'presenter', 'instructor', 'professional',
+                'man', 'woman', 'human', 'humans', 'employee', 'worker',
+                'typing', 'holding', 'showing', 'demonstrating', 'explaining',
+                'happy', 'excited', 'confident', 'productive', 'office',
+                'meeting', 'collaboration', 'tutorial', 'educational'
+            ]
 
             # Checar pessoas ANTES de chamar LLM
             if any(keyword in desc_lower for keyword in people_keywords):
                 self.logger.info(f"✅ KEYWORD MATCH: Palavra de PESSOA detectada → FORÇANDO PEXELS")
+                self.logger.info(f"   Descrição: {description[:100]}...")
+                return "pexels"
+
+            # Para conteúdo educacional, SEMPRE usar Pexels (vídeos reais são melhores)
+            educational_keywords = ['tutorial', 'como usar', 'aprenda', 'dicas', 'produtiv',
+                                    'how to', 'learn', 'tips', 'guide', 'guia']
+            if any(keyword in desc_lower for keyword in educational_keywords):
+                self.logger.info(f"✅ CONTEÚDO EDUCACIONAL detectado → FORÇANDO PEXELS")
                 return "pexels"
 
             classification_prompt = f"""Classifique esta cena de vídeo como "pexels" ou "stability".
@@ -390,7 +429,12 @@ Responda APENAS com uma palavra: pexels ou stability"""
             # Gerar keywords em inglês usando LLM
             keywords = await self._generate_pexels_keywords(description, mood)
 
-            self.logger.info(f"🔍 Buscando Pexels: {keywords}")
+            # PROTEÇÃO CRÍTICA: Garantir que keywords não estão vazias
+            if not keywords or len(keywords.strip()) < 3:
+                self.logger.warning(f"⚠️ Keywords vazias/inválidas, usando fallback genérico")
+                keywords = "business professional people working office"
+
+            self.logger.info(f"🔍 Buscando Pexels: '{keywords}'")
 
             # Fazer busca no Pexels
             response = requests.get(
@@ -398,16 +442,30 @@ Responda APENAS com uma palavra: pexels ou stability"""
                 headers={"Authorization": self.pexels_api_key},
                 params={
                     "query": keywords,
-                    "per_page": 3,
+                    "per_page": 5,  # Aumentado para mais opções
                     "orientation": "landscape",
                     "size": "medium"  # HD quality
                 },
-                timeout=10
+                timeout=30  # Aumentado de 15s para 30s
             )
 
             if response.status_code != 200:
-                self.logger.error(f"Pexels API error: {response.status_code}")
-                return None
+                self.logger.error(f"Pexels API error: {response.status_code} - Query: '{keywords}'")
+                # Tentar busca genérica como último recurso
+                self.logger.info("🔄 Tentando busca genérica no Pexels...")
+                response = requests.get(
+                    "https://api.pexels.com/videos/search",
+                    headers={"Authorization": self.pexels_api_key},
+                    params={
+                        "query": "business professional technology",
+                        "per_page": 5,
+                        "orientation": "landscape"
+                    },
+                    timeout=30  # Aumentado de 15s para 30s
+                )
+                if response.status_code != 200:
+                    self.logger.error(f"Pexels fallback também falhou: {response.status_code}")
+                    return None
 
             data = response.json()
 

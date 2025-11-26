@@ -1,0 +1,447 @@
+# ============================================================================
+# Docker Compose - PRODUCTION Environment
+# Full stack with PostgreSQL, RabbitMQ, monitoring, and security
+# ============================================================================
+
+version: '3.9'
+
+services:
+  # ============================================================================
+  # Frontend: Gradio Dashboard
+  # ============================================================================
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard.optimized
+      cache_from:
+        - oma-dashboard:latest
+    image: oma-dashboard:production
+    container_name: oma-dashboard
+    restart: always
+    ports:
+      - "${DASHBOARD_PORT:-7860}:7860"
+    environment:
+      # API Keys
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      PEXELS_API_KEY: ${PEXELS_API_KEY}
+      STABILITY_API_KEY: ${STABILITY_API_KEY:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      # Service URLs
+      REDIS_URL: redis://redis:6379/0
+      RABBITMQ_URL: amqp://oma:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+      DATABASE_URL: postgresql://oma:${POSTGRES_PASSWORD}@postgres:5432/oma_production
+      # Configuration
+      PORT: 7860
+      ENVIRONMENT: production
+      DEBUG: "false"
+      LOG_LEVEL: INFO
+      # Rate limiting
+      MAX_REQUESTS_PER_HOUR: 100
+      MAX_CONCURRENT_REQUESTS: 10
+      # Security
+      SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+    volumes:
+      - ./outputs:/app/outputs:rw
+      - dashboard-logs:/app/logs:rw
+      - dashboard-cache:/app/cache:rw
+    networks:
+      - oma-frontend
+      - oma-backend
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    labels:
+      - "com.oma.service=dashboard"
+      - "com.oma.tier=frontend"
+      - "com.oma.environment=production"
+
+  # ============================================================================
+  # Worker: Media Processing Agent
+  # ============================================================================
+  media-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.media.optimized
+      cache_from:
+        - oma-media-agent:latest
+    image: oma-media-agent:production
+    container_name: oma-media-agent
+    restart: always
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      PEXELS_API_KEY: ${PEXELS_API_KEY}
+      REDIS_URL: redis://redis:6379/0
+      RABBITMQ_URL: amqp://oma:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+      DATABASE_URL: postgresql://oma:${POSTGRES_PASSWORD}@postgres:5432/oma_production
+      FFMPEG_THREADS: 4
+      WORKER_MODE: "true"
+      LOG_LEVEL: INFO
+      PROMETHEUS_PORT: 9090
+    volumes:
+      - ./outputs:/app/outputs:rw
+      - media-temp:/app/outputs/temp:rw
+      - media-logs:/app/logs:rw
+    networks:
+      - oma-backend
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "ffmpeg", "-version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+    labels:
+      - "com.oma.service=media-agent"
+      - "com.oma.tier=worker"
+      - "com.oma.environment=production"
+
+  # ============================================================================
+  # Cache & Queue: Redis
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: oma-redis
+    restart: always
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - oma-backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      - "com.oma.service=redis"
+      - "com.oma.tier=cache"
+
+  # ============================================================================
+  # Message Queue: RabbitMQ
+  # ============================================================================
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: oma-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: oma
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 512MiB
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - oma-backend
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      - "com.oma.service=rabbitmq"
+      - "com.oma.tier=queue"
+
+  # ============================================================================
+  # Database: PostgreSQL
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: oma-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: oma_production
+      POSTGRES_USER: oma
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - oma-backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oma -d oma_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    labels:
+      - "com.oma.service=postgres"
+      - "com.oma.tier=database"
+
+  # ============================================================================
+  # Monitoring: Prometheus
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: oma-prometheus
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - oma-backend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    labels:
+      - "com.oma.service=prometheus"
+      - "com.oma.tier=monitoring"
+
+  # ============================================================================
+  # Visualization: Grafana
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: oma-grafana
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_SERVER_ROOT_URL: http://localhost:3000
+      GF_INSTALL_PLUGINS: redis-datasource,postgres-datasource
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - oma-backend
+    depends_on:
+      - prometheus
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    labels:
+      - "com.oma.service=grafana"
+      - "com.oma.tier=monitoring"
+
+  # ============================================================================
+  # Alerting: AlertManager
+  # ============================================================================
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: oma-alertmanager
+    restart: always
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/config.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - oma-backend
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.oma.service=alertmanager"
+      - "com.oma.tier=monitoring"
+
+  # ============================================================================
+  # Log Aggregation: Loki
+  # ============================================================================
+  loki:
+    image: grafana/loki:latest
+    container_name: oma-loki
+    restart: always
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    networks:
+      - oma-backend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.oma.service=loki"
+      - "com.oma.tier=logging"
+
+  # ============================================================================
+  # Reverse Proxy & WAF: Nginx
+  # ============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: oma-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+    networks:
+      - oma-frontend
+    depends_on:
+      - dashboard
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    labels:
+      - "com.oma.service=nginx"
+      - "com.oma.tier=proxy"
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  oma-frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  oma-backend:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  redis-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+  postgres-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  alertmanager-data:
+    driver: local
+  loki-data:
+    driver: local
+  media-temp:
+    driver: local
+  dashboard-logs:
+    driver: local
+  dashboard-cache:
+    driver: local
+  media-logs:
+    driver: local
+  nginx-cache:
+    driver: local

@@ -1,0 +1,103 @@
+════════════════════════════════════════════════════════════════
+
+           OMA.AI - ERRO: Localhost Não Conecta
+
+════════════════════════════════════════════════════════════════
+
+PROBLEMA:
+   ERR_CONNECTION_REFUSED em http://localhost:7860
+
+CAUSA:
+   Docker Desktop NÃO está rodando
+
+
+════════════════════════════════════════════════════════════════
+                    SOLUÇÃO (3 PASSOS)
+════════════════════════════════════════════════════════════════
+
+PASSO 1: INICIAR DOCKER DESKTOP
+────────────────────────────────────────────────────────────────
+
+   1. Pressione a tecla Windows
+
+   2. Digite: Docker Desktop
+
+   3. Clique no app "Docker Desktop"
+
+   4. AGUARDE 1-2 MINUTOS até:
+      - Ícone do Docker aparecer na bandeja
+      - Mensagem: "Docker Desktop is running"
+
+
+PASSO 2: EXECUTAR DIAGNÓSTICO
+────────────────────────────────────────────────────────────────
+
+   Duplo clique no arquivo:
+
+      DIAGNOSTICO_RAPIDO.bat
+
+   O script vai:
+   - Verificar se Docker está OK
+   - Buildar imagens (se necessário)
+   - Iniciar containers
+   - Abrir Dashboard
+
+
+PASSO 3: ACESSAR DASHBOARD
+────────────────────────────────────────────────────────────────
+
+   O navegador abrirá automaticamente em:
+
+   http://localhost:7860
+
+
+════════════════════════════════════════════════════════════════
+                  TEMPO ESTIMADO (PRIMEIRA VEZ)
+════════════════════════════════════════════════════════════════
+
+   - Iniciar Docker Desktop:     2 minutos
+   - Build das imagens:          8-10 minutos
+   - Iniciar containers:         30 segundos
+   ─────────────────────────────────────────
+   TOTAL:                        ~12 minutos
+
+
+════════════════════════════════════════════════════════════════
+                 SE O DOCKER NÃO INSTALAR
+════════════════════════════════════════════════════════════════
+
+   Baixe e instale Docker Desktop:
+   https://www.docker.com/products/docker-desktop/
+
+   Depois execute:
+
+   wsl --install
+
+   E reinicie o computador.
+
+
+════════════════════════════════════════════════════════════════
+                       ARQUIVOS ÚTEIS
+════════════════════════════════════════════════════════════════
+
+   DIAGNOSTICO_RAPIDO.bat    <- Execute este!
+   START_HERE.bat            <- Setup completo
+   TROUBLESHOOTING.md        <- Problemas detalhados
+   README_QUICK_START.md     <- Guia visual
+   STATUS.txt                <- Resumo do projeto
+
+
+════════════════════════════════════════════════════════════════
+                         RESUMO
+════════════════════════════════════════════════════════════════
+
+   1. Iniciar Docker Desktop (Menu Iniciar)
+   2. Aguardar 1-2 minutos
+   3. Duplo clique: DIAGNOSTICO_RAPIDO.bat
+   4. Aguardar build (8-10 min na primeira vez)
+   5. Acessar: http://localhost:7860
+
+   Pronto!
+
+
+Precisa de ajuda? Leia: TROUBLESHOOTING.md

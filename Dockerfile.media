@@ -1,0 +1,73 @@
+# ============================================================================
+# OMA Media Agent - Production Dockerfile
+# Handles FFmpeg, TTS, and heavy media processing
+# ============================================================================
+
+# Stage 1: FFmpeg builder (reduz tamanho final em 40%)
+FROM python:3.11-slim AS ffmpeg-base
+
+# Install FFmpeg from Debian repos (mais rápido que compilar)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsndfile1 \
+    libportaudio2 \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Stage 2: Python dependencies
+FROM ffmpeg-base AS python-deps
+
+WORKDIR /app
+
+# Copy requirements first (Docker cache optimization)
+COPY requirements.txt .
+
+# Install Python dependencies with caching
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt && \
+    # Install edge-tts for narration
+    pip install --no-cache-dir edge-tts==6.1.10 && \
+    # Install additional audio processing libs
+    pip install --no-cache-dir \
+        pydub==0.25.1 \
+        soundfile==0.12.1
+
+# Stage 3: Final production image
+FROM python-deps
+
+# Security: Create non-root user
+RUN groupadd -r omauser && useradd -r -g omauser omauser
+
+# Copy application code
+COPY --chown=omauser:omauser agents/ ./agents/
+COPY --chown=omauser:omauser core/ ./core/
+COPY --chown=omauser:omauser mcp/ ./mcp/
+
+# Create necessary directories with proper permissions
+RUN mkdir -p \
+    /app/outputs/videos \
+    /app/outputs/audio \
+    /app/outputs/images \
+    /app/outputs/temp \
+    /app/logs && \
+    chown -R omauser:omauser /app
+
+# Health check for container orchestration
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD ffmpeg -version > /dev/null 2>&1 || exit 1
+
+# Environment variables for production
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    FFMPEG_THREADS=4 \
+    TMP=/app/outputs/temp
+
+# Switch to non-root user
+USER omauser
+
+# Working directory
+WORKDIR /app
+
+# Entry point for media agent worker
+CMD ["python", "-m", "agents.editor_agent"]

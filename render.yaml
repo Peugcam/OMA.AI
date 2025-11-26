@@ -5,7 +5,7 @@ services:
     dockerfilePath: ./Dockerfile
     plan: standard  # standard tem mais RAM para TTS/FFmpeg
     region: oregon
-    healthCheckPath: /
+    # No health check path - Render will use the PORT binding
     envVars:
       - key: OPENROUTER_API_KEY
         sync: false
@@ -15,9 +15,13 @@ services:
         sync: false
       - key: ELEVENLABS_API_KEY
         sync: false
-      - key: PORT
-        value: 7860
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
       - key: GRADIO_SERVER_NAME
         value: "0.0.0.0"
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: DEBUG
+        value: "false"

@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMA Dashboard - Video Generation Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #e94560;
+            --primary-dark: #c73e54;
+            --secondary: #48dbfb;
+            --success: #00ff88;
+            --warning: #feca57;
+            --danger: #ff6b6b;
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(255, 255, 255, 0.08);
+            --transition-speed: 0.6s;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* ========================================
+           PARTICLES BACKGROUND
+           ======================================== */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(233, 69, 96, 0.5);
+            border-radius: 50%;
+            animation: float 20s infinite;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .particle:nth-child(odd) {
+            background: rgba(72, 219, 251, 0.5);
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* ========================================
+           LAYOUT
+           ======================================== */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ========================================
+           SIDEBAR
+           ======================================== */
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .logo {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo span {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 20px 12px;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            margin-bottom: 6px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(233, 69, 96, 0.15);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .nav-item .icon {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-item .label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Status indicator */
+        .api-status {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: var(--success);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .api-status span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ========================================
+           MAIN CONTENT
+           ======================================== */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h2 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* ========================================
+           PAGES CONTAINER
+           ======================================== */
+        .pages-container {
+            position: relative;
+            min-height: calc(100vh - 80px);
+            perspective: 2000px;
+            overflow: hidden;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: calc(100vh - 80px);
+            padding: 30px;
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            backface-visibility: hidden;
+        }
+
+        /* Page states */
+        .page.active {
+            transform: translateX(0) rotateY(0);
+            opacity: 1;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .page.left {
+            transform: translateX(-100%) rotateY(-30deg);
+            opacity: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .page.right {
+            transform: translateX(100%) rotateY(30deg);
+            opacity: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* Shine effect */
+        .page::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                105deg,
+                transparent 40%,
+                rgba(255, 255, 255, 0.1) 45%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0.1) 55%,
+                transparent 60%
+            );
+            transform: translateX(-100%);
+            pointer-events: none;
+        }
+
+        .page.active.animate-shine::after {
+            animation: shine 0.8s ease-out;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* ========================================
+           CARDS
+           ======================================== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            font-size: 24px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .stat-card.success::before {
+            background: linear-gradient(90deg, var(--success), #00cc6a);
+        }
+
+        .stat-card.warning::before {
+            background: linear-gradient(90deg, var(--warning), #f0b429);
+        }
+
+        .stat-card.danger::before {
+            background: linear-gradient(90deg, var(--danger), #e55050);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 48px;
+            opacity: 0.1;
+        }
+
+        /* ========================================
+           TASKS TABLE
+           ======================================== */
+        .tasks-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tasks-table th,
+        .tasks-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tasks-table th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .tasks-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.pending {
+            background: rgba(254, 202, 87, 0.2);
+            color: var(--warning);
+        }
+
+        .status-badge.processing {
+            background: rgba(72, 219, 251, 0.2);
+            color: var(--secondary);
+        }
+
+        .status-badge.completed {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--success);
+        }
+
+        .status-badge.failed {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger);
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* ========================================
+           FORMS
+           ======================================== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* ========================================
+           EMPTY STATE
+           ======================================== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* ========================================
+           LOADING
+           ======================================== */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ========================================
+           TOAST NOTIFICATIONS
+           ======================================== */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 16px 24px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 12px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast.success {
+            border-left-color: var(--success);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ========================================
+           RESPONSIVE
+           ======================================== */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .sidebar .logo h1,
+            .sidebar .logo span,
+            .nav-item .label,
+            .nav-item .badge,
+            .api-status span {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 70px;
+            }
+
+            .nav-item {
+                justify-content: center;
+                padding: 14px;
+            }
+
+            .nav-item .icon {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>OMA</h1>
+                <span>Video Platform</span>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-item active" data-page="0">
+                    <span class="icon">&#128202;</span>
+                    <span class="label">Dashboard</span>
+                </div>
+                <div class="nav-item" data-page="1">
+                    <span class="icon">&#127916;</span>
+                    <span class="label">Generate Video</span>
+                </div>
+                <div class="nav-item" data-page="2">
+                    <span class="icon">&#128203;</span>
+                    <span class="label">Tasks</span>
+                    <span class="badge" id="tasksBadge">0</span>
+                </div>
+                <div class="nav-item" data-page="3">
+                    <span class="icon">&#128200;</span>
+                    <span class="label">Metrics</span>
+                </div>
+                <div class="nav-item" data-page="4">
+                    <span class="icon">&#128176;</span>
+                    <span class="label">Costs</span>
+                </div>
+                <div class="nav-item" data-page="5">
+                    <span class="icon">&#9881;</span>
+                    <span class="label">Settings</span>
+                </div>
+            </nav>
+
+            <div class="api-status">
+                <div class="status-dot" id="apiStatusDot"></div>
+                <span id="apiStatusText">Checking API...</span>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <h2 id="pageTitle">Dashboard</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="refreshData()">
+                        <span>&#8635;</span> Refresh
+                    </button>
+                    <button class="btn btn-primary" onclick="goToPage(1)">
+                        <span>&#10010;</span> New Video
+                    </button>
+                </div>
+            </header>
+
+            <div class="pages-container">
+                <!-- Page 0: Dashboard -->
+                <div class="page active" data-index="0">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalVideos">0</div>
+                            <div class="stat-label">Total Videos</div>
+                            <div class="stat-icon">&#127916;</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-value" id="successRate">0%</div>
+                            <div class="stat-label">Success Rate</div>
+                            <div class="stat-icon">&#9989;</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-value" id="avgTime">0s</div>
+                            <div class="stat-label">Avg. Generation</div>
+                            <div class="stat-icon">&#9201;</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalCost">$0.00</div>
+                            <div class="stat-label">Total Cost</div>
+                            <div class="stat-icon">&#128176;</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="icon">&#128203;</span>
+                                Recent Tasks
+                            </div>
+                        </div>
+                        <div id="recentTasksContainer">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page 1: Generate Video -->
+                <div class="page right" data-index="1">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="icon">&#127916;</span>
+                                Create New Video
+                            </div>
+                        </div>
+
+                        <form id="generateForm">
+                            <div class="form-group">
+                                <label for="videoTitle">Title</label>
+                                <input type="text" id="videoTitle" class="form-control" placeholder="Enter video title..." required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="videoDescription">Description</label>
+                                <textarea id="videoDescription" class="form-control" placeholder="Describe your video content..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="videoDuration">Duration (seconds)</label>
+                                <input type="number" id="videoDuration" class="form-control" value="30" min="10" max="300">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="videoStyle">Style</label>
+                                <select id="videoStyle" class="form-control">
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="cinematic">Cinematic</option>
+                                    <option value="minimalist">Minimalist</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                <span>&#9889;</span> Generate Video
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Page 2: Tasks -->
+                <div class="page right" data-index="2">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="icon">&#128203;</span>
+                                All Tasks
+                            </div>
+                            <select id="taskFilter" class="form-control" style="width: auto;">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                        </div>
+                        <div id="allTasksContainer">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page 3: Metrics -->
+                <div class="page right" data-index="3">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="uptimeValue">0h</div>
+                            <div class="stat-label">Uptime</div>
+                            <div class="stat-icon">&#9201;</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-value" id="requestsValue">0</div>
+                            <div class="stat-label">Total Requests</div>
+                            <div class="stat-icon">&#128640;</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="icon">&#128200;</span>
+                                Performance Metrics
+                            </div>
+                        </div>
+                        <div id="metricsContainer">
+                            <p style="color: var(--text-muted);">Metrics will be displayed here when the API is connected.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page 4: Costs -->
+                <div class="page right" data-index="4">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalCostPage">$0.00</div>
+                            <div class="stat-label">Total Spent</div>
+                            <div class="stat-icon">&#128176;</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-value" id="avgCostPerVideo">$0.00</div>
+                            <div class="stat-label">Avg per Video</div>
+                            <div class="stat-icon">&#127916;</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="icon">&#128176;</span>
+                                Cost Breakdown
+                            </div>
+                        </div>
+                        <div id="costContainer">
+                            <p style="color: var(--text-muted);">Cost details will be displayed here.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page 5: Settings -->
+                <div class="page right" data-index="5">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="icon">&#9881;</span>
+                                Settings
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apiUrl">API URL</label>
+                            <input type="text" id="apiUrl" class="form-control" value="http://localhost:8000/api/v1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transitionMode">Transition Mode</label>
+                            <select id="transitionMode" class="form-control">
+                                <option value="slide">Slide</option>
+                                <option value="fade">Fade</option>
+                                <option value="flip">Flip 3D</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transitionSpeed">Transition Speed</label>
+                            <input type="range" id="transitionSpeed" class="form-control" min="0.2" max="1.5" step="0.1" value="0.6" style="padding: 8px;">
+                            <span id="speedLabel" style="color: var(--text-muted);">0.6s</span>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="saveSettings()">
+                            Save Settings
+                        </button>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="icon">&#128712;</span>
+                                About
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">
+                            <strong>OMA Dashboard</strong> - Multi-Agent Video Generation Platform<br><br>
+                            Version: 2.0.0<br>
+                            Built with: HTML5, CSS3, JavaScript<br>
+                            Backend: FastAPI + Python<br><br>
+                            100% Open Source
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ========================================
+        // CONFIGURATION
+        // ========================================
+        let API_URL = 'http://localhost:8000/api/v1';
+        let currentPage = 0;
+        let isAnimating = false;
+        let transitionSpeed = 0.6;
+
+        const pageTitles = [
+            'Dashboard',
+            'Generate Video',
+            'Tasks',
+            'Metrics',
+            'Costs',
+            'Settings'
+        ];
+
+        // ========================================
+        // ELEMENTS
+        // ========================================
+        const pages = document.querySelectorAll('.page');
+        const navItems = document.querySelectorAll('.nav-item');
+        const pageTitle = document.getElementById('pageTitle');
+
+        // ========================================
+        // PARTICLES
+        // ========================================
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 25; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDuration = (15 + Math.random() * 20) + 's';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.width = (2 + Math.random() * 4) + 'px';
+                particle.style.height = particle.style.width;
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // ========================================
+        // NAVIGATION
+        // ========================================
+        function goToPage(index) {
+            if (index < 0 || index >= pages.length || index === currentPage || isAnimating) return;
+
+            isAnimating = true;
+
+            // Remove animation class
+            pages.forEach(p => p.classList.remove('animate-shine'));
+
+            // Update pages
+            pages.forEach((page, i) => {
+                page.classList.remove('active', 'left', 'right');
+
+                if (i === index) {
+                    page.classList.add('active');
+                    setTimeout(() => page.classList.add('animate-shine'), 50);
+                } else if (i < index) {
+                    page.classList.add('left');
+                } else {
+                    page.classList.add('right');
+                }
+            });
+
+            // Update nav
+            navItems.forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+
+            // Update title
+            pageTitle.textContent = pageTitles[index];
+
+            currentPage = index;
+
+            // Release animation lock
+            setTimeout(() => {
+                isAnimating = false;
+            }, transitionSpeed * 1000);
+        }
+
+        // Nav click handlers
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                goToPage(parseInt(item.dataset.page));
+            });
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') goToPage(currentPage + 1);
+            if (e.key === 'ArrowLeft') goToPage(currentPage - 1);
+        });
+
+        // ========================================
+        // API FUNCTIONS
+        // ========================================
+        async function checkApiStatus() {
+            const dot = document.getElementById('apiStatusDot');
+            const text = document.getElementById('apiStatusText');
+
+            try {
+                const response = await fetch(`${API_URL}/health`, { timeout: 5000 });
+                if (response.ok) {
+                    dot.classList.add('online');
+                    text.textContent = 'API Online';
+                    return true;
+                }
+            } catch (e) {
+                // API offline
+            }
+
+            dot.classList.remove('online');
+            text.textContent = 'API Offline';
+            return false;
+        }
+
+        async function fetchStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                if (response.ok) {
+                    const data = await response.json();
+
+                    document.getElementById('totalVideos').textContent = data.total_videos_generated || 0;
+                    document.getElementById('successRate').textContent = (data.success_rate || 0).toFixed(1) + '%';
+                    document.getElementById('avgTime').textContent = (data.average_generation_time || 0).toFixed(1) + 's';
+                    document.getElementById('totalCost').textContent = '$' + (data.total_cost || 0).toFixed(2);
+                    document.getElementById('totalCostPage').textContent = '$' + (data.total_cost || 0).toFixed(2);
+
+                    const uptime = data.uptime_seconds || 0;
+                    const hours = Math.floor(uptime / 3600);
+                    const mins = Math.floor((uptime % 3600) / 60);
+                    document.getElementById('uptimeValue').textContent = `${hours}h ${mins}m`;
+
+                    // Avg cost per video
+                    const totalVideos = data.total_videos_generated || 1;
+                    const avgCost = (data.total_cost || 0) / totalVideos;
+                    document.getElementById('avgCostPerVideo').textContent = '$' + avgCost.toFixed(4);
+                }
+            } catch (e) {
+                console.error('Failed to fetch stats:', e);
+            }
+        }
+
+        async function fetchTasks(container, filter = '') {
+            try {
+                let url = `${API_URL}/videos/tasks`;
+                if (filter) url += `?status_filter=${filter}`;
+
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    renderTasks(container, data.tasks);
+                    document.getElementById('tasksBadge').textContent = data.total;
+                }
+            } catch (e) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">&#128683;</div>
+                        <h3>Cannot connect to API</h3>
+                        <p>Make sure the OMA API is running on ${API_URL}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderTasks(container, tasks) {
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">&#128203;</div>
+                        <h3>No tasks yet</h3>
+                        <p>Generate your first video to see tasks here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>Task ID</th>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tasks.map(task => `
+                            <tr>
+                                <td style="font-family: monospace; font-size: 12px;">${task.task_id}</td>
+                                <td>${task.title || '-'}</td>
+                                <td><span class="status-badge ${task.status}">${task.status}</span></td>
+                                <td>
+                                    <div class="progress-bar">
+                                        <div class="fill" style="width: ${task.progress}%"></div>
+                                    </div>
+                                </td>
+                                <td style="color: var(--text-muted); font-size: 13px;">
+                                    ${new Date(task.created_at).toLocaleString()}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // ========================================
+        // FORM HANDLERS
+        // ========================================
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const briefing = {
+                title: document.getElementById('videoTitle').value,
+                description: document.getElementById('videoDescription').value,
+                duration: parseInt(document.getElementById('videoDuration').value),
+                style: document.getElementById('videoStyle').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/videos/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ briefing })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(`Video generation started! Task ID: ${data.task_id}`, 'success');
+
+                    // Clear form
+                    document.getElementById('generateForm').reset();
+
+                    // Go to tasks page
+                    setTimeout(() => goToPage(2), 1000);
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Failed to start generation', 'error');
+                }
+            } catch (e) {
+                showToast('Cannot connect to API', 'error');
+            }
+        });
+
+        // Task filter
+        document.getElementById('taskFilter').addEventListener('change', (e) => {
+            fetchTasks(document.getElementById('allTasksContainer'), e.target.value);
+        });
+
+        // Settings
+        document.getElementById('transitionSpeed').addEventListener('input', (e) => {
+            transitionSpeed = parseFloat(e.target.value);
+            document.getElementById('speedLabel').textContent = transitionSpeed + 's';
+            document.documentElement.style.setProperty('--transition-speed', transitionSpeed + 's');
+        });
+
+        function saveSettings() {
+            API_URL = document.getElementById('apiUrl').value;
+            localStorage.setItem('oma_api_url', API_URL);
+            localStorage.setItem('oma_transition_speed', transitionSpeed);
+            showToast('Settings saved!', 'success');
+            checkApiStatus();
+        }
+
+        // Load settings
+        function loadSettings() {
+            const savedUrl = localStorage.getItem('oma_api_url');
+            const savedSpeed = localStorage.getItem('oma_transition_speed');
+
+            if (savedUrl) {
+                API_URL = savedUrl;
+                document.getElementById('apiUrl').value = savedUrl;
+            }
+
+            if (savedSpeed) {
+                transitionSpeed = parseFloat(savedSpeed);
+                document.getElementById('transitionSpeed').value = savedSpeed;
+                document.getElementById('speedLabel').textContent = savedSpeed + 's';
+                document.documentElement.style.setProperty('--transition-speed', savedSpeed + 's');
+            }
+        }
+
+        // ========================================
+        // TOAST NOTIFICATIONS
+        // ========================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ========================================
+        // REFRESH DATA
+        // ========================================
+        async function refreshData() {
+            showToast('Refreshing data...', 'info');
+            await checkApiStatus();
+            await fetchStats();
+            await fetchTasks(document.getElementById('recentTasksContainer'));
+            await fetchTasks(document.getElementById('allTasksContainer'), document.getElementById('taskFilter').value);
+        }
+
+        // ========================================
+        // INIT
+        // ========================================
+        async function init() {
+            loadSettings();
+            await checkApiStatus();
+            await fetchStats();
+            await fetchTasks(document.getElementById('recentTasksContainer'));
+
+            // Auto refresh every 30 seconds
+            setInterval(async () => {
+                await checkApiStatus();
+                await fetchStats();
+                if (currentPage === 2) {
+                    await fetchTasks(document.getElementById('allTasksContainer'), document.getElementById('taskFilter').value);
+                }
+            }, 30000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

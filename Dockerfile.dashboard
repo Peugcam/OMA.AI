@@ -1,0 +1,61 @@
+# ============================================================================
+# OMA Dashboard - Gradio Web Interface Dockerfile
+# Lightweight container for web interface and orchestration
+# ============================================================================
+
+FROM python:3.11-slim
+
+# Security: Create non-root user early
+RUN groupadd -r omauser && useradd -r -g omauser omauser
+
+# Install minimal system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements (cache optimization)
+COPY requirements.txt .
+
+# Install Python dependencies with specific versions for stability
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy application files
+COPY --chown=omauser:omauser app.py .
+COPY --chown=omauser:omauser video_dashboard_complete.py .
+COPY --chown=omauser:omauser agents/ ./agents/
+COPY --chown=omauser:omauser core/ ./core/
+COPY --chown=omauser:omauser mcp/ ./mcp/
+
+# Create output directories
+RUN mkdir -p \
+    /app/outputs/videos \
+    /app/outputs/temp \
+    /app/logs \
+    /app/.gradio && \
+    chown -R omauser:omauser /app
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-7860}/ || exit 1
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    GRADIO_SERVER_NAME=0.0.0.0 \
+    GRADIO_ANALYTICS_ENABLED=false \
+    GRADIO_TELEMETRY_ENABLED=false
+
+# Switch to non-root user
+USER omauser
+
+# Dynamic port binding for cloud platforms
+EXPOSE ${PORT:-7860}
+
+# Start Gradio dashboard
+CMD ["python", "app.py"]

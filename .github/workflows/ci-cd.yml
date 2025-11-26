@@ -1,0 +1,201 @@
+name: OMA.AI CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+  release:
+    types: [published]
+
+env:
+  REGISTRY: gcr.io
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  IMAGE_DASHBOARD: oma-dashboard
+  IMAGE_MEDIA: oma-media-agent
+
+jobs:
+  # ============================================================================
+  # Job 1: Code Quality & Security Scan
+  # ============================================================================
+  quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install bandit safety pylint black isort
+
+      - name: Run Black (code formatting)
+        run: black --check agents/ core/ mcp/
+
+      - name: Run isort (import sorting)
+        run: isort --check-only agents/ core/ mcp/
+
+      - name: Run Pylint
+        run: pylint agents/ core/ mcp/ --rcfile=.pylintrc || true
+
+      - name: Security scan with Bandit
+        run: bandit -r agents/ core/ mcp/ -c .bandit.yaml
+
+      - name: Dependency vulnerability scan
+        run: safety check --json || true
+
+  # ============================================================================
+  # Job 2: Build and Test Docker Images
+  # ============================================================================
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: quality
+    strategy:
+      matrix:
+        image: [dashboard, media]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.image }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.image }}-
+
+      - name: Build ${{ matrix.image }} image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.image }}.optimized
+          push: false
+          tags: oma-${{ matrix.image }}:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Test ${{ matrix.image }} image
+        run: |
+          docker run --rm oma-${{ matrix.image }}:${{ github.sha }} python --version
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  # ============================================================================
+  # Job 3: Integration Tests
+  # ============================================================================
+  test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start services
+        run: |
+          docker-compose -f docker-compose.dev.yml up -d
+          sleep 30
+
+      - name: Run health checks
+        run: |
+          curl -f http://localhost:7860/health || exit 1
+
+      - name: Run integration tests
+        run: |
+          docker-compose -f docker-compose.dev.yml exec -T dashboard pytest tests/ -v
+
+      - name: Collect logs
+        if: failure()
+        run: docker-compose -f docker-compose.dev.yml logs
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker-compose.dev.yml down -v
+
+  # ============================================================================
+  # Job 4: Deploy to Google Cloud Run (Production)
+  # ============================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [quality, build, test]
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Dashboard
+        run: |
+          docker build -f Dockerfile.dashboard.optimized -t $REGISTRY/$PROJECT_ID/$IMAGE_DASHBOARD:${{ github.sha }} .
+          docker push $REGISTRY/$PROJECT_ID/$IMAGE_DASHBOARD:${{ github.sha }}
+          docker tag $REGISTRY/$PROJECT_ID/$IMAGE_DASHBOARD:${{ github.sha }} $REGISTRY/$PROJECT_ID/$IMAGE_DASHBOARD:latest
+          docker push $REGISTRY/$PROJECT_ID/$IMAGE_DASHBOARD:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy oma-dashboard \
+            --image $REGISTRY/$PROJECT_ID/$IMAGE_DASHBOARD:${{ github.sha }} \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --set-secrets=OPENROUTER_API_KEY=OPENROUTER_API_KEY:latest,PEXELS_API_KEY=PEXELS_API_KEY:latest \
+            --memory 2Gi \
+            --cpu 2 \
+            --timeout 900 \
+            --min-instances 1 \
+            --max-instances 10
+
+      - name: Notify Slack
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "✅ OMA.AI deployed to production!",
+              attachments: [{
+                color: 'good',
+                text: `Version: ${{ github.sha }}\nEnvironment: Production\nURL: https://oma-dashboard-xxxxx.run.app`
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ============================================================================
+  # Job 5: Deploy to Staging (on develop branch)
+  # ============================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [quality, build]
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Railway (Staging)
+        uses: bervProject/railway-deploy@main
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: oma-staging

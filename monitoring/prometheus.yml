@@ -1,0 +1,64 @@
+# ============================================================================
+# Prometheus Configuration for OMA.AI
+# Monitors Docker containers and custom metrics
+# ============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'oma-docker-monitor'
+    environment: 'development'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  # - "alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Docker containers (requires cAdvisor)
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: 'docker-monitoring'
+
+  # OMA Dashboard metrics
+  - job_name: 'oma-dashboard'
+    static_configs:
+      - targets: ['dashboard:8080']
+        labels:
+          service: 'dashboard'
+          component: 'frontend'
+    metrics_path: '/metrics'
+
+  # OMA Media Agent metrics
+  - job_name: 'oma-media-agent'
+    static_configs:
+      - targets: ['media-agent:9090']
+        labels:
+          service: 'media-agent'
+          component: 'backend'
+    metrics_path: '/metrics'
+
+  # Redis monitoring
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'redis'
+          component: 'cache'
