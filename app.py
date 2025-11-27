@@ -7,8 +7,9 @@ Entry point for cloud platforms (Hugging Face Spaces, Railway, Render, Heroku).
 
 import os
 
-# Get port from environment (Railway, Render, Heroku assign dynamic ports)
-PORT = int(os.environ.get("PORT", 7860))
+# Get port from environment (Cloud Run, Railway, Render, Heroku assign dynamic ports)
+# Cloud Run uses 8080 by default, Hugging Face uses 7860
+PORT = int(os.environ.get("PORT", 8080))
 
 # Set Gradio environment variables
 os.environ.setdefault("GRADIO_SERVER_NAME", "0.0.0.0")
