@@ -59,16 +59,15 @@ class AudioAgent:
         # Verificar ElevenLabs (prioridade)
         self.elevenlabs_available = False
         self.elevenlabs_key = os.getenv("ELEVENLABS_API_KEY")
+        self.elevenlabs_client = None
 
         # Tentar importar ElevenLabs (independente da API key)
         try:
-            from elevenlabs import generate, save, set_api_key
-            self.elevenlabs_generate = generate
-            self.elevenlabs_save = save
+            from elevenlabs.client import ElevenLabs
             if self.elevenlabs_key:
-                set_api_key(self.elevenlabs_key)
+                self.elevenlabs_client = ElevenLabs(api_key=self.elevenlabs_key)
                 self.elevenlabs_available = True
-                self.logger.info("✅ ElevenLabs TTS disponível")
+                self.logger.info("✅ ElevenLabs TTS disponível (v2+ API)")
             else:
                 self.logger.warning("ElevenLabs instalado mas sem API key")
         except ImportError as e:
@@ -174,7 +173,7 @@ class AudioAgent:
 
     async def _generate_elevenlabs_tts(self, text: str, voice_id: str = "XrExE9yKIg1WjnnlVkGX") -> Path:
         """
-        Gera áudio usando ElevenLabs TTS.
+        Gera áudio usando ElevenLabs TTS (API v2+).
 
         Args:
             text: Texto para narrar
@@ -187,20 +186,22 @@ class AudioAgent:
         - XrExE9yKIg1WjnnlVkGX: Matilda (português BR, feminina)
         - pqHfZKP75CvOlQylNhV4: Bill (português BR, masculino)
         """
-        self.logger.info(f"Gerando TTS com ElevenLabs (voice: {voice_id})...")
+        self.logger.info(f"Gerando TTS com ElevenLabs v2 (voice: {voice_id})...")
 
         # Path de saída
         output_path = self.output_dir / f"narration_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
 
-        # Gerar com ElevenLabs
-        audio = self.elevenlabs_generate(
+        # Gerar com ElevenLabs v2 API
+        audio = self.elevenlabs_client.generate(
             text=text,
             voice=voice_id,
             model="eleven_multilingual_v2"
         )
 
-        # Salvar áudio
-        self.elevenlabs_save(audio, str(output_path))
+        # Salvar áudio (audio é um generator de bytes)
+        with open(output_path, "wb") as f:
+            for chunk in audio:
+                f.write(chunk)
 
         self.logger.info(f"OK - ElevenLabs TTS salvo: {output_path}")
 
