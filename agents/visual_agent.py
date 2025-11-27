@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 from core import AIClient, AIClientFactory, PromptTemplates, ResponseValidator
+from core.paths import get_images_dir, get_pexels_videos_dir
 
 
 class VisualAgent:
@@ -58,22 +59,9 @@ class VisualAgent:
         if not self.stability_api_key:
             self.logger.warning("STABILITY_API_KEY não configurada, usando placeholders")
 
-        # Diretórios de saída (múltiplos locais)
-        self.output_dirs = [
-            Path("C:/Users/paulo/OneDrive/Desktop/OMA_Videos/images"),
-            Path("D:/OMA_Videos/images"),
-            Path("./outputs/images")
-        ]
-
-        # Criar diretórios
-        for dir_path in self.output_dirs:
-            try:
-                dir_path.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                self.logger.warning(f"Não foi possível criar {dir_path}: {e}")
-
-        # Usar primeiro como principal
-        self.output_dir = self.output_dirs[0]
+        # Diretório de saída (detecta automaticamente prod/dev)
+        self.output_dir = get_images_dir()
+        self.logger.info(f"📁 Images dir: {self.output_dir}")
 
         # System prompt
         self.system_prompt = PromptTemplates.visual_system_prompt()
@@ -524,9 +512,9 @@ Responda APENAS com uma palavra: pexels ou stability"""
             Path do arquivo baixado
         """
         try:
-            # Criar diretório de downloads
-            download_dir = Path("C:/Users/paulo/OneDrive/Desktop/OMA_Videos/pexels_videos")
-            download_dir.mkdir(parents=True, exist_ok=True)
+            # Criar diretório de downloads (detecta automaticamente prod/dev)
+            download_dir = get_pexels_videos_dir()
+            self.logger.info(f"📁 Pexels videos dir: {download_dir}")
 
             # Nome do arquivo
             filename = f"pexels_{video_id}.mp4"

@@ -1,0 +1,16 @@
+======================================================
+🚀 OMA Video Generator - Google Cloud Deploy
+======================================================
+[1;33m📋 Validating environment...[0m
+[0;32m✅ Environment validated[0m
+[1;33m🔧 Setting GCP project...[0m
+Updated property [core/project].
+[1;33m🔌 Enabling required APIs...[0m
+Operation "operations/acat.p2-778600940048-35e84ccf-777d-47bb-a97b-05f25584f53c" finished successfully.
+[1;33m📦 Checking Artifact Registry...[0m
+Repository already exists.
+[1;33m🏗️  Building Docker image...[0m
+ERROR: (gcloud.builds.submit) unrecognized arguments: --dockerfile=Dockerfile.cloudrun (did you mean '--ignore-file'?) 
+
+To search the help text of gcloud commands, run:
+  gcloud help -- SEARCH_TERMS

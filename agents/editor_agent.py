@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from core import AIClient, AIClientFactory
+from core.paths import get_output_dir, get_temp_dir
 
 
 class EditorAgent:

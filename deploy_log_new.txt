@@ -1,0 +1,25 @@
+======================================================
+🚀 OMA Video Generator - Google Cloud Deploy
+======================================================
+[1;33m📋 Validating environment...[0m
+[0;32m✅ Environment validated[0m
+[1;33m🔧 Setting GCP project...[0m
+Updated property [core/project].
+[1;33m🔌 Enabling required APIs...[0m
+Operation "operations/acat.p2-778600940048-1c616b11-77b8-4fc1-a40c-d208740b41c8" finished successfully.
+[1;33m📦 Checking Artifact Registry...[0m
+Repository already exists.
+[1;33m🏗️  Building Docker image...[0m
+ERROR: (gcloud.builds.submit) argument --config: At most one of --config | --pack | --tag can be specified.
+Usage: gcloud builds submit [[SOURCE] --no-source] [optional flags]
+  optional flags may be  --async | --no-cache | --config |
+                         --default-buckets-behavior | --dir | --disk-size |
+                         --gcs-log-dir | --gcs-source-staging-dir |
+                         --git-source-dir | --git-source-revision | --help |
+                         --ignore-file | --machine-type | --pack |
+                         --polling-interval | --region | --revision |
+                         --service-account | --no-source | --substitutions |
+                         --suppress-logs | --tag | --timeout | --worker-pool
+
+For detailed information on this command and its flags, run:
+  gcloud builds submit --help
