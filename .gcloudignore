@@ -1,46 +1,75 @@
 # ============================================================================
-# .gcloudignore - Otimizado para deploy no Google Cloud
+# .gcloudignore - SIMPLIFIED for Google Cloud Deploy
 # ============================================================================
-# Este arquivo funciona como .gitignore mas para gcloud deploy
-# Reduz o tamanho do upload e acelera o deploy
+# Strategy: Use .gitignore as base, then EXPLICITLY include what we need
 # ============================================================================
 
-# IMPORTANT: Include essential Python files
-!*.py
+#!include:.gitignore
+
+# ============================================================================
+# FORCE INCLUDE ESSENTIAL FILES (processed last, override all previous rules)
+# ============================================================================
+# These ! rules must be at the END to override any excludes above
+
+# Core Python application files
 !quick_generate.py
 !app.py
 !run_api.py
 !video_dashboard_complete.py
+!requirements.txt
 
-# Python artifacts
+# Essential directories
+!agents/**
+!core/**
+!api/**
+!mcp/**
+
+# Essential config files
+!Dockerfile.cloudrun
+!cloudbuild.yaml
+
+# ============================================================================
+# EXPLICIT EXCLUDES (things that are definitely not needed in Cloud)
+# ============================================================================
+
+# Git
+.git/
+.github/
+
+# Python cache
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
 *.py[cod]
 *$py.class
 *.so
-.Python
+*.egg
 *.egg-info/
-dist/
-build/
+.eggs/
 
 # Virtual environments
-env/
 venv/
+env/
 ENV/
 .venv/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-test_results/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-*
 
-# Environment & Secrets (NUNCA fazer upload!)
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Environment files (SECURITY - never upload!)
 .env
 .env.*
 *.env
@@ -49,11 +78,16 @@ test_results/
 credentials.json
 service-account*.json
 
-# Logs (usar Cloud Logging)
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Logs
 logs/
 *.log
 
-# Output files (usar Cloud Storage)
+# Output files (use Cloud Storage instead)
 outputs/
 temp/
 OMA_Videos/
@@ -61,75 +95,53 @@ videos/
 *.mp4
 *.avi
 *.mov
-
-# Git
-.git/
-.gitignore
-.gitattributes
-.github/
-
-# Docker files (manter apenas Dockerfile.cloudrun para o build!)
-# IMPORTANTE: Dockerfile.cloudrun é necessário para Cloud Build!
-!Dockerfile.cloudrun
-Dockerfile
-Dockerfile.simple
-Dockerfile.fixed
-Dockerfile.dashboard
-Dockerfile.dashboard.optimized
-Dockerfile.media
-Dockerfile.media.optimized
-docker-compose*.yml
-.dockerignore
+*.mkv
 
 # Documentation
-*.md
 docs/
+*.md
 README*
 LICENSE
 CONTRIBUTING*
 
-# CI/CD files (exceto cloudbuild.yaml)
+# CI/CD (except our cloudbuild.yaml)
 .travis.yml
-azure-pipelines.yml
 .gitlab-ci.yml
-
-# Quality tools
-.flake8
-.pylintrc
-mypy.ini
-.mypy_cache/
-pyproject.toml
-.pre-commit-config.yaml
-
-# Node modules
-node_modules/
-
-# Tests
-tests/
-test_*.py
-*_test.py
+azure-pipelines.yml
 
 # Development scripts
 *.bat
 setup_*.sh
 cleanup*
 
-# Large files
+# Large ML files
 *.pth
 *.ckpt
 *.safetensors
 *.bin
+*.h5
+*.pb
 models/
+
+# Other Docker files (we only need Dockerfile.cloudrun)
+Dockerfile
+Dockerfile.*
+!Dockerfile.cloudrun
+docker-compose*.yml
+.dockerignore
 
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Database
 *.db
 *.sqlite
+*.sqlite3
 
-# Analysis & Reports
-reports/
-*_ANALYSIS.md
-*_SUMMARY.md
+# Other
+node_modules/
+*.bak
+*.tmp
+*.cache
