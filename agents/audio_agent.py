@@ -39,14 +39,23 @@ class AudioAgent:
         else:
             self.llm = AIClientFactory.create_for_agent("audio")
 
-        # Diretórios de saída (múltiplos locais)
-        self.output_dirs = [
-            Path("C:/Users/paulo/OneDrive/Desktop/OMA_Videos/audio"),
-            Path("D:/OMA_Videos/audio"),
-            Path("./outputs/audio")
-        ]
+        # Detectar sistema operacional e escolher diretório apropriado
+        import platform
 
-        # Criar diretórios e escolher o primeiro que funcionar
+        if platform.system() == "Windows":
+            # Windows: tentar diretórios locais primeiro
+            self.output_dirs = [
+                Path("C:/Users/paulo/OneDrive/Desktop/OMA_Videos/audio"),
+                Path("D:/OMA_Videos/audio"),
+                Path("./outputs/audio")
+            ]
+        else:
+            # Linux/Cloud Run: usar apenas path relativo
+            self.output_dirs = [
+                Path("./outputs/audio")
+            ]
+
+        # Criar diretório e usar o primeiro que funcionar
         self.output_dir = None
         for dir_path in self.output_dirs:
             try:
@@ -54,7 +63,8 @@ class AudioAgent:
                 # Se conseguiu criar, usa este
                 if self.output_dir is None:
                     self.output_dir = dir_path
-                    self.logger.info(f"Usando diretório de áudio: {dir_path}")
+                    self.logger.info(f"✅ Usando diretório de áudio: {dir_path} (OS: {platform.system()})")
+                    break  # Para no primeiro que funcionar
             except Exception as e:
                 self.logger.warning(f"Não foi possível criar {dir_path}: {e}")
 
@@ -62,6 +72,7 @@ class AudioAgent:
         if self.output_dir is None:
             self.output_dir = Path("./outputs/audio")
             self.output_dir.mkdir(parents=True, exist_ok=True)
+            self.logger.warning(f"⚠️ Usando fallback: {self.output_dir}")
 
         # Verificar ElevenLabs (prioridade)
         self.elevenlabs_available = False
