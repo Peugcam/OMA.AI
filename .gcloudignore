@@ -61,8 +61,16 @@ videos/
 .gitattributes
 .github/
 
-# Docker (já incluído no build)
-Dockerfile*
+# Docker files (manter apenas Dockerfile.cloudrun para o build!)
+# IMPORTANTE: Dockerfile.cloudrun é necessário para Cloud Build!
+!Dockerfile.cloudrun
+Dockerfile
+Dockerfile.simple
+Dockerfile.fixed
+Dockerfile.dashboard
+Dockerfile.dashboard.optimized
+Dockerfile.media
+Dockerfile.media.optimized
 docker-compose*.yml
 .dockerignore
 
