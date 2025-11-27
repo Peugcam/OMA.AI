@@ -57,19 +57,24 @@ class AudioAgent:
         self.output_dir = self.output_dirs[0]
 
         # Verificar ElevenLabs (prioridade)
+        self.elevenlabs_available = False
         self.elevenlabs_key = os.getenv("ELEVENLABS_API_KEY")
-        self.elevenlabs_available = bool(self.elevenlabs_key)
 
-        if self.elevenlabs_available:
-            try:
-                from elevenlabs import generate, save, set_api_key
-                self.elevenlabs_generate = generate
-                self.elevenlabs_save = save
+        # Tentar importar ElevenLabs (independente da API key)
+        try:
+            from elevenlabs import generate, save, set_api_key
+            self.elevenlabs_generate = generate
+            self.elevenlabs_save = save
+            if self.elevenlabs_key:
                 set_api_key(self.elevenlabs_key)
+                self.elevenlabs_available = True
                 self.logger.info("✅ ElevenLabs TTS disponível")
-            except ImportError:
-                self.logger.warning("elevenlabs não instalado")
-                self.elevenlabs_available = False
+            else:
+                self.logger.warning("ElevenLabs instalado mas sem API key")
+        except ImportError as e:
+            self.logger.warning(f"elevenlabs não instalado: {e}")
+        except Exception as e:
+            self.logger.error(f"Erro ao configurar ElevenLabs: {e}")
 
         # Fallback para Edge TTS (gratuito)
         try:
@@ -221,14 +226,22 @@ class AudioAgent:
         """
         self.logger.info(f"Gerando TTS com Edge TTS (voice: {voice})...")
 
+        # Validar texto
+        if not text or not text.strip():
+            raise ValueError("Texto vazio para TTS")
+
         # Path de saída
         output_path = self.output_dir / f"narration_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
 
         # Gerar com Edge TTS
-        communicate = self.edge_tts.Communicate(text, voice)
+        communicate = self.edge_tts.Communicate(text=text, voice=voice, rate="+0%", volume="+0%")
         await communicate.save(str(output_path))
 
-        self.logger.info(f"OK - Edge TTS salvo: {output_path}")
+        # Verificar se arquivo foi criado
+        if not output_path.exists() or output_path.stat().st_size == 0:
+            raise RuntimeError(f"Edge TTS não gerou áudio válido: {output_path}")
+
+        self.logger.info(f"OK - Edge TTS salvo: {output_path} ({output_path.stat().st_size} bytes)")
 
         return output_path
 
