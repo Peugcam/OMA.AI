@@ -386,5 +386,6 @@ class EditorAgent:
 # Para compatibilidade
 # ============================================================================
 
-# Alias
-render_video = EditorAgent().edit_video
+# NOTA: Alias removido - causava instanciação durante import
+# Se precisar de compatibilidade, use: EditorAgent().edit_video diretamente
+# render_video = EditorAgent().edit_video  # ← Removido

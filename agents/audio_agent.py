@@ -184,5 +184,6 @@ class AudioAgent:
 # Para compatibilidade
 # ============================================================================
 
-# Alias
-generate_audio = AudioAgent().produce_audio
+# NOTA: Alias removido - causava instanciação durante import
+# Se precisar de compatibilidade, use: AudioAgent().produce_audio diretamente
+# generate_audio = AudioAgent().produce_audio  # ← Removido
