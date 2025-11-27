@@ -7,6 +7,7 @@ Integrado com módulos otimizados.
 
 import logging
 import asyncio
+import os
 from typing import Dict, Any, List
 from datetime import datetime
 from pathlib import Path
@@ -55,15 +56,32 @@ class AudioAgent:
         # Usar primeiro como principal
         self.output_dir = self.output_dirs[0]
 
-        # Verificar se edge-tts está instalado
+        # Verificar ElevenLabs (prioridade)
+        self.elevenlabs_key = os.getenv("ELEVENLABS_API_KEY")
+        self.elevenlabs_available = bool(self.elevenlabs_key)
+
+        if self.elevenlabs_available:
+            try:
+                from elevenlabs import generate, save, set_api_key
+                self.elevenlabs_generate = generate
+                self.elevenlabs_save = save
+                set_api_key(self.elevenlabs_key)
+                self.logger.info("✅ ElevenLabs TTS disponível")
+            except ImportError:
+                self.logger.warning("elevenlabs não instalado")
+                self.elevenlabs_available = False
+
+        # Fallback para Edge TTS (gratuito)
         try:
             import edge_tts
             self.edge_tts = edge_tts
-            self.tts_available = True
+            self.edge_tts_available = True
+            self.logger.info("✅ Edge TTS disponível (fallback)")
         except ImportError:
-            self.logger.warning("edge-tts não instalado. Use: pip install edge-tts")
-            self.edge_tts = None
-            self.tts_available = False
+            self.logger.warning("edge-tts não instalado")
+            self.edge_tts_available = False
+
+        self.tts_available = self.elevenlabs_available or self.edge_tts_available
 
 
     async def produce_audio(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -103,19 +121,40 @@ class AudioAgent:
             "generated_at": datetime.now().isoformat()
         }
 
-        # Gerar narração com Edge TTS
+        # Tentar gerar narração com TTS disponível
         if self.tts_available:
-            try:
-                narration_path = await self._generate_tts(narration)
+            narration_path = None
+
+            # Prioridade 1: ElevenLabs (melhor qualidade)
+            if self.elevenlabs_available:
+                try:
+                    self.logger.info("Tentando gerar com ElevenLabs...")
+                    narration_path = await self._generate_elevenlabs_tts(narration)
+                    self.logger.info(f"✅ Narração gerada com ElevenLabs: {narration_path}")
+                except Exception as e:
+                    self.logger.warning(f"ElevenLabs falhou: {e}")
+                    narration_path = None
+
+            # Fallback: Edge TTS
+            if not narration_path and self.edge_tts_available:
+                try:
+                    self.logger.info("Tentando gerar com Edge TTS (fallback)...")
+                    narration_path = await self._generate_edge_tts(narration)
+                    self.logger.info(f"✅ Narração gerada com Edge TTS: {narration_path}")
+                except Exception as e:
+                    self.logger.error(f"Edge TTS também falhou: {e}")
+                    narration_path = None
+
+            # Resultado final
+            if narration_path:
                 audio_files["narration_file"] = str(narration_path)
-                audio_files["final_mix"] = str(narration_path)  # Por enquanto, apenas narração
-                self.logger.info(f"OK - Narração gerada: {narration_path}")
-            except Exception as e:
-                self.logger.error(f"Erro ao gerar TTS: {e}")
+                audio_files["final_mix"] = str(narration_path)
+            else:
+                self.logger.error("Todos os serviços TTS falharam")
                 audio_files["narration_file"] = "placeholder"
                 audio_files["final_mix"] = "placeholder"
         else:
-            self.logger.warning("Edge TTS não disponível, usando placeholder")
+            self.logger.warning("Nenhum serviço TTS disponível, usando placeholder")
             audio_files["narration_file"] = "placeholder"
             audio_files["final_mix"] = "placeholder"
 
@@ -128,9 +167,44 @@ class AudioAgent:
         return state
 
 
-    async def _generate_tts(self, text: str, voice: str = "pt-BR-FranciscaNeural") -> Path:
+    async def _generate_elevenlabs_tts(self, text: str, voice_id: str = "XrExE9yKIg1WjnnlVkGX") -> Path:
         """
-        Gera áudio usando Edge TTS.
+        Gera áudio usando ElevenLabs TTS.
+
+        Args:
+            text: Texto para narrar
+            voice_id: ID da voz (padrão: Matilda - voz feminina brasileira natural)
+
+        Returns:
+            Path para arquivo de áudio
+
+        Voices disponíveis:
+        - XrExE9yKIg1WjnnlVkGX: Matilda (português BR, feminina)
+        - pqHfZKP75CvOlQylNhV4: Bill (português BR, masculino)
+        """
+        self.logger.info(f"Gerando TTS com ElevenLabs (voice: {voice_id})...")
+
+        # Path de saída
+        output_path = self.output_dir / f"narration_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+
+        # Gerar com ElevenLabs
+        audio = self.elevenlabs_generate(
+            text=text,
+            voice=voice_id,
+            model="eleven_multilingual_v2"
+        )
+
+        # Salvar áudio
+        self.elevenlabs_save(audio, str(output_path))
+
+        self.logger.info(f"OK - ElevenLabs TTS salvo: {output_path}")
+
+        return output_path
+
+
+    async def _generate_edge_tts(self, text: str, voice: str = "pt-BR-FranciscaNeural") -> Path:
+        """
+        Gera áudio usando Edge TTS (fallback gratuito).
 
         Args:
             text: Texto para narrar
@@ -145,7 +219,7 @@ class AudioAgent:
         - pt-BR-BrendaNeural (Feminino)
         - pt-BR-DonatoNeural (Masculino)
         """
-        self.logger.info(f"Gerando TTS com voz: {voice}")
+        self.logger.info(f"Gerando TTS com Edge TTS (voice: {voice})...")
 
         # Path de saída
         output_path = self.output_dir / f"narration_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
@@ -154,7 +228,7 @@ class AudioAgent:
         communicate = self.edge_tts.Communicate(text, voice)
         await communicate.save(str(output_path))
 
-        self.logger.info(f"OK - TTS salvo: {output_path}")
+        self.logger.info(f"OK - Edge TTS salvo: {output_path}")
 
         return output_path
 

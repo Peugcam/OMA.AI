@@ -25,6 +25,9 @@ Pillow==10.4.0
 # TTS (Edge TTS - gratuito da Microsoft)
 edge-tts>=6.1.0
 
+# TTS (ElevenLabs - melhor qualidade)
+elevenlabs>=0.2.0
+
 # Audio
 pydub==0.25.1
 
