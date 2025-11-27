@@ -28,9 +28,15 @@ if sys.platform == "win32":
 try:
     from quick_generate import generate_video
     GENERATOR_AVAILABLE = True
-except ImportError:
+    print("✅ quick_generate.py loaded successfully!")
+except ImportError as e:
     GENERATOR_AVAILABLE = False
-    print("⚠️ quick_generate.py não encontrado. Modo demo ativado.")
+    print(f"⚠️ ImportError: {e}. Modo demo ativado.")
+except Exception as e:
+    GENERATOR_AVAILABLE = False
+    print(f"⚠️ Error loading quick_generate.py: {type(e).__name__}: {e}")
+    import traceback
+    traceback.print_exc()
 
 
 # ============================================================================
