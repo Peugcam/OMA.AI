@@ -191,11 +191,11 @@ class AudioAgent:
         # Path de saída
         output_path = self.output_dir / f"narration_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
 
-        # Gerar com ElevenLabs v2 API
-        audio = self.elevenlabs_client.generate(
+        # Gerar com ElevenLabs v2+ API (método correto)
+        audio = self.elevenlabs_client.text_to_speech.convert(
+            voice_id=voice_id,
             text=text,
-            voice=voice_id,
-            model="eleven_multilingual_v2"
+            model_id="eleven_multilingual_v2"
         )
 
         # Salvar áudio (audio é um generator de bytes)
