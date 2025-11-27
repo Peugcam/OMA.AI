@@ -22,8 +22,8 @@ pydantic-settings>=2.0.0
 ffmpeg-python==0.2.0
 Pillow==10.4.0
 
-# TTS (ElevenLabs via API - mais leve que Coqui local)
-# TTS local removido para reduzir tamanho da imagem
+# TTS (Edge TTS - gratuito da Microsoft)
+edge-tts>=6.1.0
 
 # Audio
 pydub==0.25.1
