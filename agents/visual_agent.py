@@ -1029,5 +1029,6 @@ Retorne APENAS o prompt melhorado (sem aspas, sem explicação):"""
 # Para compatibilidade com supervisor antigo
 # ============================================================================
 
-# Alias para manter compatibilidade
-generate_visuals = VisualAgent().plan_visuals
+# NOTA: Alias removido - causava instanciação durante import
+# Se precisar de compatibilidade, use: VisualAgent().plan_visuals diretamente
+# generate_visuals = VisualAgent().plan_visuals  # ← Removido
