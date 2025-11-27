@@ -90,10 +90,14 @@ COPY agents/ ./agents/
 COPY core/ ./core/
 COPY api/ ./api/
 COPY mcp/ ./mcp/
-# CRITICAL: Copy main Python files
-COPY quick_generate.py ./
-COPY app.py run_api.py video_dashboard_complete.py ./
+
+# CRITICAL: Copy all Python files explicitly
+# Using wildcard to ensure they're included
+COPY *.py ./
 COPY requirements.txt ./
+
+# Verify quick_generate.py exists (will fail build if missing)
+RUN test -f /app/quick_generate.py || (echo "ERROR: quick_generate.py not found!" && exit 1)
 
 # ============================================
 # CRIAR DIRETÓRIOS E PERMISSÕES
