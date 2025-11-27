@@ -6,6 +6,14 @@ Entry point for cloud platforms (Hugging Face Spaces, Railway, Render, Heroku).
 """
 
 import os
+import sys
+
+# DEBUG: Print current working directory and files
+print(f"DEBUG: Current working directory: {os.getcwd()}")
+print(f"DEBUG: Python path: {sys.path}")
+print(f"DEBUG: Files in /app: {os.listdir('/app')}")
+print(f"DEBUG: quick_generate.py exists: {os.path.exists('/app/quick_generate.py')}")
+print(f"DEBUG: quick_generate.py exists in cwd: {os.path.exists('quick_generate.py')}")
 
 # Get port from environment (Cloud Run, Railway, Render, Heroku assign dynamic ports)
 # Cloud Run uses 8080 by default, Hugging Face uses 7860
