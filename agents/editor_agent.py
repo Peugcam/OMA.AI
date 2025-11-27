@@ -39,23 +39,24 @@ class EditorAgent:
         else:
             self.llm = AIClientFactory.create_for_agent("editor")
 
-        # Diretórios de saída (múltiplos locais)
-        self.output_dirs = [
-            Path("C:/Users/paulo/OneDrive/Desktop/OMA_Videos"),  # OneDrive
-            Path("D:/OMA_Videos"),  # Pendrive
-            Path("./outputs/videos")  # Local (backup)
-        ]
+        # Diretório de saída (usa path dinâmico baseado no ambiente)
+        self.output_dir = get_output_dir()
+        self.logger.info(f"📁 Output dir: {self.output_dir}")
 
-        # Criar diretórios
-        for dir_path in self.output_dirs:
-            try:
-                dir_path.mkdir(parents=True, exist_ok=True)
-                self.logger.info(f"Diretório criado/verificado: {dir_path}")
-            except Exception as e:
-                self.logger.warning(f"Não foi possível criar {dir_path}: {e}")
-
-        # Usar primeiro diretório disponível como principal
-        self.output_dir = self.output_dirs[0]
+        # Diretórios adicionais apenas para Windows (desenvolvimento)
+        self.additional_output_dirs = []
+        if not self.output_dir.as_posix().startswith("/app"):
+            # Apenas em desenvolvimento Windows, criar backups adicionais
+            self.additional_output_dirs = [
+                Path("D:/OMA_Videos"),  # Pendrive
+                Path("./outputs/videos")  # Local (backup)
+            ]
+            for dir_path in self.additional_output_dirs:
+                try:
+                    dir_path.mkdir(parents=True, exist_ok=True)
+                    self.logger.info(f"📁 Backup dir: {dir_path}")
+                except Exception as e:
+                    self.logger.warning(f"Não foi possível criar {dir_path}: {e}")
 
         # Verificar se FFmpeg está disponível
         self.ffmpeg_available = self._check_ffmpeg()
@@ -167,8 +168,8 @@ class EditorAgent:
         # e depois concatenar
 
         temp_videos = []
-        temp_dir = Path("./outputs/temp")
-        temp_dir.mkdir(parents=True, exist_ok=True)
+        temp_dir = get_temp_dir()
+        self.logger.info(f"📁 Temp dir: {temp_dir}")
 
         try:
             # Criar vídeo para cada cena
@@ -342,7 +343,7 @@ class EditorAgent:
 
     def _copy_to_all_locations(self, source_path: Path):
         """
-        Copia vídeo para todos os locais configurados.
+        Copia vídeo para todos os locais adicionais configurados (apenas Windows).
 
         Args:
             source_path: Path do vídeo original
@@ -351,11 +352,7 @@ class EditorAgent:
 
         filename = source_path.name
 
-        for i, target_dir in enumerate(self.output_dirs):
-            # Pular o primeiro (já é onde foi salvo)
-            if i == 0:
-                continue
-
+        for target_dir in self.additional_output_dirs:
             try:
                 target_path = target_dir / filename
                 shutil.copy2(source_path, target_path)
