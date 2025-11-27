@@ -24,6 +24,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copiar requirements
 COPY requirements.txt .
 
+# Forçar rebuild ao mudar requirements (cache bust)
+RUN echo "Build time: $(date)" > /build/build_time.txt
+
 # Criar wheels pré-compilados (acelera instalação)
 RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
