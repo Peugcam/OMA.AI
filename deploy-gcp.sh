@@ -20,7 +20,7 @@ echo "======================================================"
 # ============================================
 # CONFIGURAÇÕES (EDITE AQUI!)
 # ============================================
-PROJECT_ID="seu-projeto-gcp"
+PROJECT_ID="oma-video-prod"
 REGION="southamerica-east1"
 SERVICE_NAME="oma-video-generator"
 REPO_NAME="docker-repo"
@@ -92,37 +92,17 @@ else
 fi
 
 # ============================================
-# BUILD & PUSH DA IMAGEM
+# BUILD & PUSH DA IMAGEM usando cloudbuild.yaml
 # ============================================
 IMAGE_NAME="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/oma-api"
-TAG=$(date +%Y%m%d-%H%M%S)
 
-echo -e "${YELLOW}🏗️  Building Docker image...${NC}"
+echo -e "${YELLOW}🏗️  Building and deploying via Cloud Build...${NC}"
 gcloud builds submit \
-    --tag="$IMAGE_NAME:$TAG" \
-    --tag="$IMAGE_NAME:latest" \
+    --config=cloudbuild.yaml \
     --timeout=30m \
     --machine-type=e2-highcpu-8 \
-    --dockerfile=Dockerfile.cloudrun \
+    --substitutions="_REGION=$REGION,_SERVICE_NAME=$SERVICE_NAME,_CPU=$CPU,_MEMORY=$MEMORY,_MIN_INSTANCES=$MIN_INSTANCES,_MAX_INSTANCES=$MAX_INSTANCES,_TIMEOUT=$TIMEOUT,_CONCURRENCY=$CONCURRENCY" \
     .
-
-# ============================================
-# DEPLOY NO CLOUD RUN
-# ============================================
-echo -e "${YELLOW}🚀 Deploying to Cloud Run...${NC}"
-gcloud run deploy $SERVICE_NAME \
-    --image="$IMAGE_NAME:$TAG" \
-    --platform=managed \
-    --region=$REGION \
-    --cpu=$CPU \
-    --memory=$MEMORY \
-    --min-instances=$MIN_INSTANCES \
-    --max-instances=$MAX_INSTANCES \
-    --timeout=${TIMEOUT}s \
-    --concurrency=$CONCURRENCY \
-    --allow-unauthenticated \
-    --port=8080 \
-    --set-env-vars="ENVIRONMENT=production,GRADIO_SERVER_NAME=0.0.0.0,OPENAI_API_KEY=$OPENAI_API_KEY"
 
 # ============================================
 # OBTER URL DO SERVIÇO
