@@ -1,0 +1,120 @@
+# ============================================================================
+# .gcloudignore - Otimizado para deploy no Google Cloud
+# ============================================================================
+# Este arquivo funciona como .gitignore mas para gcloud deploy
+# Reduz o tamanho do upload e acelera o deploy
+# ============================================================================
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test_results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment & Secrets (NUNCA fazer upload!)
+.env
+.env.*
+*.env
+*.pem
+*.key
+credentials.json
+service-account*.json
+
+# Logs (usar Cloud Logging)
+logs/
+*.log
+
+# Output files (usar Cloud Storage)
+outputs/
+temp/
+OMA_Videos/
+videos/
+*.mp4
+*.avi
+*.mov
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Docker (já incluído no build)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+*.md
+docs/
+README*
+LICENSE
+CONTRIBUTING*
+
+# CI/CD files (exceto cloudbuild.yaml)
+.travis.yml
+azure-pipelines.yml
+.gitlab-ci.yml
+
+# Quality tools
+.flake8
+.pylintrc
+mypy.ini
+.mypy_cache/
+pyproject.toml
+.pre-commit-config.yaml
+
+# Node modules
+node_modules/
+
+# Tests
+tests/
+test_*.py
+*_test.py
+
+# Development scripts
+*.bat
+setup_*.sh
+cleanup*
+
+# Large files
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+models/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+
+# Analysis & Reports
+reports/
+*_ANALYSIS.md
+*_SUMMARY.md
