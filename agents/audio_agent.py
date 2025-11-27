@@ -46,15 +46,22 @@ class AudioAgent:
             Path("./outputs/audio")
         ]
 
-        # Criar diretórios
+        # Criar diretórios e escolher o primeiro que funcionar
+        self.output_dir = None
         for dir_path in self.output_dirs:
             try:
                 dir_path.mkdir(parents=True, exist_ok=True)
+                # Se conseguiu criar, usa este
+                if self.output_dir is None:
+                    self.output_dir = dir_path
+                    self.logger.info(f"Usando diretório de áudio: {dir_path}")
             except Exception as e:
                 self.logger.warning(f"Não foi possível criar {dir_path}: {e}")
 
-        # Usar primeiro como principal
-        self.output_dir = self.output_dirs[0]
+        # Fallback se nenhum funcionou
+        if self.output_dir is None:
+            self.output_dir = Path("./outputs/audio")
+            self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Verificar ElevenLabs (prioridade)
         self.elevenlabs_available = False
