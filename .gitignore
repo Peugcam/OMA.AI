@@ -42,6 +42,10 @@ venv.bak/
 .env.local
 .env.*.local
 
+# Test files with API keys (NEVER commit these!)
+test_*_key.py
+test_api*.py
+
 # Outputs
 outputs/
 *.mp4
