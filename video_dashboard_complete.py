@@ -93,6 +93,7 @@ def format_history_table():
 # ============================================================================
 # TEMPLATES PRONTOS
 # ============================================================================
+# ATUALIZADO: Apenas template Redes Sociais (vídeos curtos para social media)
 
 TEMPLATES = {
     "Redes Sociais": {
