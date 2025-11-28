@@ -616,10 +616,15 @@ if __name__ == "__main__":
         show_error=True,  # Show errors para debug
         inbrowser=False,  # Don't open browser in production
         allowed_paths=[
+            "/app/outputs",  # Cloud Run path
+            "/app/outputs/videos",
+            "/app/outputs/temp",
+            "/app/outputs/images",
             str(Path("outputs/videos").absolute()),
             str(Path("outputs/temp").absolute()),
             str(Path("outputs/images").absolute()),
-            str(Path(".").absolute())
+            str(Path(".").absolute()),
+            "/tmp"  # Gradio temp files
         ]
     )
 
