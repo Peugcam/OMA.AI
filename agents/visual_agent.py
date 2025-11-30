@@ -156,13 +156,28 @@ class VisualAgent:
         self.logger.info(f"🎬 Cena {scene_num}: {description[:60] if description else 'SEM DESCRIÇÃO'}...")
 
         # STEP 1: Classificar tipo de cena
-        # REGRA ESPECIAL: Última cena SEMPRE usa Stability AI (CTA com logo/arte)
-        if is_last_scene:
+        # PROTEÇÃO CRÍTICA: NUNCA usar Stability para pessoas/rostos (fica horrível!)
+        people_keywords = ['person', 'people', 'face', 'hand', 'team', 'smile', 'smiling',
+                          'man', 'woman', 'human', 'professor', 'teacher', 'student',
+                          'pessoa', 'pessoas', 'rosto', 'mão', 'equipe', 'sorriso',
+                          'homem', 'mulher', 'professor', 'estudante', 'trabalhando',
+                          'working', 'talking', 'meeting', 'presentation']
+
+        desc_lower = description.lower()
+        has_people = any(keyword in desc_lower for keyword in people_keywords)
+
+        # Se tem pessoas, SEMPRE Pexels (NUNCA Stability!)
+        if has_people:
+            scene_type = "pexels"
+            self.logger.warning(f"🚫 PESSOAS detectadas! Forçando Pexels (Stability é ruim com rostos)")
+        # REGRA ESPECIAL: Última cena SEMPRE usa Stability AI (CTA com logo/arte) - MAS SÓ SE NÃO TEM PESSOAS
+        elif is_last_scene:
             scene_type = "stability"
-            self.logger.info(f"🎯 ÚLTIMA CENA → Forçando Stability AI (CTA/logo)")
+            self.logger.info(f"🎯 ÚLTIMA CENA (sem pessoas) → Forçando Stability AI (CTA/logo)")
         else:
             scene_type = await self._classify_scene_type(description, mood)
-        self.logger.info(f"📊 Classificação: {scene_type}")
+
+        self.logger.info(f"📊 Classificação: {scene_type} | Tem pessoas: {has_people}")
 
         # STEP 2: Executar estratégia apropriada
         if scene_type == "pexels":
