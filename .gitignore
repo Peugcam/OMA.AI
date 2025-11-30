@@ -104,3 +104,6 @@ CONFIGURE_PEXELS.md
 MCP_GUIA_USO.md
 SISTEMA_FUNCIONANDO.md
 oma-cloud-deploy/
+*.pem
+*.key
+docs/MIGRATION_GUIDE.md
