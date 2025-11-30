@@ -207,12 +207,21 @@ class VisualAgent:
                     self.logger.info(f"✅ Nova descrição abstrata: {description}")
 
                 # IMPORTANTE: Garantir prompt em inglês para Stability AI
-                prompt = await self._create_image_prompt(description, mood, state)
+                # PRIMEIRO: Traduzir descrição para inglês
+                self.logger.info("🔄 Traduzindo descrição para inglês antes de criar prompt...")
+                description_en = await self._translate_to_english(description)
 
-                # PROTEÇÃO: Se prompt parece estar em português, traduzir
-                if any(pt_word in prompt.lower() for pt_word in ['pessoa', 'equipe', 'escritório', 'reunião', 'trabalho', 'apresentação']):
-                    self.logger.info("🔄 Detectado português no prompt, traduzindo para inglês...")
+                # SEGUNDO: Criar prompt já em inglês
+                prompt = await self._create_image_prompt(description_en, mood, state)
+
+                # PROTEÇÃO EXTRA: Verificar se ainda tem português e traduzir novamente
+                pt_words = ['pessoa', 'equipe', 'escritório', 'reunião', 'trabalho', 'apresentação',
+                           'pessoas', 'rosto', 'mão', 'sorriso', 'café', 'tecnologia']
+                if any(pt_word in prompt.lower() for pt_word in pt_words):
+                    self.logger.warning("⚠️ AINDA tem português no prompt! Traduzindo novamente...")
                     prompt = await self._translate_to_english(prompt)
+
+                self.logger.info(f"✅ Prompt final em inglês: {prompt[:100]}...")
 
                 image_path = self._generate_with_stability(prompt, scene_num)
 
@@ -571,28 +580,40 @@ Responda APENAS com uma palavra: pexels ou stability"""
             return mood_keywords.get(mood.lower(), "business professional modern")
 
         try:
-            prompt = f"""Gere keywords em inglês para buscar vídeo no Pexels.
+            prompt = f"""Gere keywords OTIMIZADAS em inglês para buscar vídeo no Pexels.
 
 DESCRIÇÃO: {description}
 MOOD: {mood}
 
-REGRAS:
-- Máximo 3-5 palavras-chave
-- Em inglês
-- Genéricas (não específicas demais)
+REGRAS CRÍTICAS:
+- 4-6 palavras-chave (melhor cobertura)
+- Em inglês SIMPLES (palavras comuns que geram mais resultados)
+- Genéricas + 1-2 específicas (mix perfeito)
 - Sem pontuação
+- Usar sinônimos populares
+- Palavras que REALMENTE existem em vídeos stock
 
-EXEMPLOS:
-"Pessoa trabalhando em laptop" → "person working laptop office"
-"Reunião de equipe colaborativa" → "team meeting collaboration"
-"Logo holográfico futurista" → "holographic technology futuristic"
+ESTRATÉGIA INTELIGENTE:
+1. Palavras CORE (sempre geram resultados): people, business, office, technology, modern
+2. Palavras MOOD: happy, professional, dynamic, confident, calm
+3. Palavras CONTEXTO: meeting, working, laptop, team, presentation
 
-Responda APENAS com as keywords (sem aspas, sem explicação):"""
+EXEMPLOS OTIMIZADOS:
+"Pessoa trabalhando em laptop" → "person working laptop office professional modern"
+"Reunião de equipe colaborativa" → "team meeting collaboration office business happy"
+"Apresentador explicando conceito" → "presenter explaining business professional confident modern"
+"Mulher sorrindo com café" → "woman smiling coffee happy professional lifestyle"
+"Tecnologia futurista" → "technology futuristic digital innovation modern business"
+
+IMPORTANTE: Pexels tem MUITOS vídeos de pessoas trabalhando, reuniões, escritórios.
+Use palavras que combinam com esse tipo de conteúdo!
+
+Responda APENAS com as keywords otimizadas (4-6 palavras, sem aspas):"""
 
             response = await self.llm.chat(
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_tokens=30
+                temperature=0.4,  # Mais criativo para gerar variações
+                max_tokens=50  # Mais espaço para 6 keywords
             )
 
             keywords = response.strip().strip('"').strip("'")
@@ -600,7 +621,10 @@ Responda APENAS com as keywords (sem aspas, sem explicação):"""
             # PROTEÇÃO: Se resposta vazia, usar fallback
             if not keywords or len(keywords) < 3:
                 self.logger.warning("⚠️ Keywords vazias do LLM, usando fallback")
-                return "business professional modern office"
+                return "people business professional modern working office"
+
+            # LOG para debug
+            self.logger.info(f"✅ Keywords geradas: {keywords}")
 
             return keywords
 
