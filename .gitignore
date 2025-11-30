@@ -107,3 +107,4 @@ oma-cloud-deploy/
 *.pem
 *.key
 docs/MIGRATION_GUIDE.md
+DOCKER_GUIDE.md
