@@ -93,3 +93,8 @@ Thumbs.db
 *.tmp
 *.temp
 .cache/
+
+# Documentos com dados sensíveis
+SECURITY_SETUP.md
+RELATORIO_*.md
+**/logs_*.json
