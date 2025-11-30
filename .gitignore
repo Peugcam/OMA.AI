@@ -98,3 +98,9 @@ Thumbs.db
 SECURITY_SETUP.md
 RELATORIO_*.md
 **/logs_*.json
+setup_secrets.sh
+COMPARISON.md
+CONFIGURE_PEXELS.md
+MCP_GUIA_USO.md
+SISTEMA_FUNCIONANDO.md
+oma-cloud-deploy/
