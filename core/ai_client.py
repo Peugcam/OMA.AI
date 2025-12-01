@@ -83,6 +83,9 @@ class AIClient:
         messages: list[dict],
         temperature: float = 0.7,
         max_tokens: int = 1000,
+        top_p: float = 0.95,
+        frequency_penalty: float = 0.0,
+        presence_penalty: float = 0.0,
         system_prompt: Optional[str] = None
     ) -> str:
         """
@@ -92,6 +95,9 @@ class AIClient:
             messages: Lista de mensagens no formato OpenAI
             temperature: Temperatura (0.0 = determinístico, 1.0 = criativo)
             max_tokens: Máximo de tokens na resposta
+            top_p: Nucleus sampling (0.0-1.0, controla diversidade)
+            frequency_penalty: Penaliza repetição de tokens (-2.0 a 2.0)
+            presence_penalty: Encoraja novos tópicos (-2.0 a 2.0)
             system_prompt: Prompt de sistema opcional
 
         Returns:
@@ -112,7 +118,10 @@ class AIClient:
                 model=self.model,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
+                top_p=top_p,
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty
             )
 
             # Atualizar estatísticas

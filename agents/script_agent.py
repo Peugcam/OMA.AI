@@ -11,6 +11,9 @@ from typing import Dict, Any
 from datetime import datetime
 
 from core import AIClient, AIClientFactory, PromptTemplates, ResponseValidator
+from core.optimized_prompts import OptimizedPrompts
+from core.optimized_params import OptimizedParams
+from core.validators import EnhancedValidators
 
 
 class ScriptAgent:
@@ -168,6 +171,7 @@ class ScriptAgent:
     ) -> Dict[str, Any]:
         """
         Gera roteiro baseline (v1) sem reflection.
+        ATUALIZADO: Usa prompts e parâmetros otimizados.
 
         Args:
             description: Descrição do vídeo
@@ -179,21 +183,30 @@ class ScriptAgent:
         Returns:
             Roteiro estruturado (dict)
         """
-        # Gerar prompt usando template
-        prompt = PromptTemplates.script_generation(
-            description=description,
-            target_audience=target_audience,
-            duration=duration,
-            style=style,
-            cta=cta
-        )
+        # NOVO: Montar análise para prompt otimizado
+        analysis = {
+            "objective": description,
+            "target_audience": target_audience if isinstance(target_audience, dict) else {"description": target_audience},
+            "duration_seconds": duration,
+            "style": style if isinstance(style, list) else [style],
+            "cta": cta
+        }
 
-        # Chamar LLM (metodo async)
+        # NOVO: Usar prompt otimizado com Chain-of-Thought e exemplos
+        prompt = OptimizedPrompts.script_generation(analysis)
+
+        # NOVO: Usar parâmetros otimizados para escrita criativa
+        params = OptimizedParams.CREATIVE_WRITING
+
+        # Chamar LLM com parâmetros otimizados
         response = await self.llm.chat(
             messages=[{"role": "user", "content": prompt}],
             system_prompt=self.system_prompt,
-            temperature=self.temperature,
-            max_tokens=2000
+            temperature=params.temperature,
+            max_tokens=params.max_tokens,
+            top_p=params.top_p,
+            frequency_penalty=params.frequency_penalty,
+            presence_penalty=params.presence_penalty
         )
 
         # Parsear resposta JSON
@@ -201,6 +214,18 @@ class ScriptAgent:
 
         if not script or "scenes" not in script:
             raise ValueError("Resposta invalida: sem 'scenes'")
+
+        # NOVO: Validar script antes de retornar
+        is_valid, issues, suggestions = EnhancedValidators.validate_script_comprehensive(
+            script=script,
+            brief=analysis,
+            retry_count=0
+        )
+
+        if not is_valid:
+            self.logger.warning(f"⚠️ [VALIDACAO] Script gerado com {len(issues)} problemas:")
+            for issue in issues[:3]:  # Mostrar só top 3
+                self.logger.warning(f"  - {issue}")
 
         return script
 

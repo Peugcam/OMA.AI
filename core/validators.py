@@ -255,6 +255,233 @@ class ResponseValidator:
         return sanitized
 
 
+# ============================================================================
+# VALIDADORES OTIMIZADOS (NOVOS - GRÁTIS)
+# ============================================================================
+
+class EnhancedValidators:
+    """
+    Validadores aprimorados com retry logic e feedback detalhado.
+
+    GRÁTIS: Usa apenas regras (sem chamadas de IA).
+
+    Features:
+    - Validação em múltiplas camadas
+    - Feedback acionável para retry
+    - Checagens de qualidade
+    """
+
+    @staticmethod
+    def validate_script_comprehensive(
+        script: dict,
+        brief: dict,
+        retry_count: int = 0
+    ) -> tuple[bool, list[str], dict]:
+        """
+        Validação COMPLETA de script com feedback acionável.
+
+        Args:
+            script: Script gerado
+            brief: Briefing original
+            retry_count: Número de tentativas (para ajustar tolerância)
+
+        Returns:
+            Tupla (is_valid, issues, suggestions)
+
+        Exemplo:
+            valid, issues, suggestions = EnhancedValidators.validate_script_comprehensive(
+                script=my_script,
+                brief=my_brief
+            )
+
+            if not valid:
+                print("Problemas:", issues)
+                print("Sugestões:", suggestions)
+        """
+        issues = []
+        suggestions = {}
+
+        # CAMADA 1: Estrutura básica
+        if not script.get('hook'):
+            issues.append("CRÍTICO: Faltando hook inicial")
+            suggestions['hook'] = "Adicione uma frase de impacto nos primeiros 3-5s"
+
+        if not script.get('scenes') or len(script.get('scenes', [])) == 0:
+            issues.append("CRÍTICO: Script sem cenas")
+            suggestions['scenes'] = "Estruture em pelo menos 2 cenas (início + fim)"
+
+        if not script.get('cta'):
+            issues.append("IMPORTANTE: Faltando CTA (call-to-action)")
+            suggestions['cta'] = "Adicione ação clara ao final (ex: 'Clique no link', 'Comente abaixo')"
+
+        # CAMADA 2: Timing
+        target_duration = brief.get('duration', 30)
+        actual_duration = script.get('total_duration', 0)
+
+        # Tolerância aumenta com retries (primeira tentativa: ±2s, depois ±5s)
+        tolerance = 2 if retry_count == 0 else 5
+
+        if abs(actual_duration - target_duration) > tolerance:
+            issues.append(f"IMPORTANTE: Duração fora do alvo ({actual_duration}s vs {target_duration}s)")
+            suggestions['duration'] = f"Ajuste para ficar entre {target_duration-tolerance}s e {target_duration+tolerance}s"
+
+        # CAMADA 3: Qualidade do conteúdo
+        scenes = script.get('scenes', [])
+
+        # Verificar se cenas têm narração
+        empty_scenes = [i+1 for i, s in enumerate(scenes) if not s.get('narration')]
+        if empty_scenes:
+            issues.append(f"IMPORTANTE: Cenas sem narração: {empty_scenes}")
+            suggestions['narration'] = "Toda cena precisa de texto/narração"
+
+        # Verificar duração das cenas
+        for i, scene in enumerate(scenes):
+            scene_duration = scene.get('duration', 0)
+            if scene_duration < 2:
+                issues.append(f"AVISO: Cena {i+1} muito curta ({scene_duration}s)")
+            elif scene_duration > 15:
+                issues.append(f"AVISO: Cena {i+1} muito longa ({scene_duration}s), dificulta atenção")
+
+        # Verificar hook (primeira cena)
+        if scenes and scenes[0].get('duration', 0) > 5:
+            issues.append("IMPORTANTE: Hook muito longo (> 5s), pode perder atenção")
+            suggestions['hook_timing'] = "Hook deve ser 3-5s, direto ao ponto"
+
+        # CAMADA 4: Coerência
+        total_scenes_duration = sum([s.get('duration', 0) for s in scenes])
+        if abs(total_scenes_duration - actual_duration) > 1:
+            issues.append(f"ERRO: Soma das cenas ({total_scenes_duration}s) ≠ total ({actual_duration}s)")
+            suggestions['coherence'] = "Recalcule duração total baseado nas cenas"
+
+        # CAMADA 5: Qualidade narrativa
+        hook_text = script.get('hook', '')
+        if len(hook_text) < 10:
+            issues.append("AVISO: Hook muito curto (< 10 caracteres)")
+            suggestions['hook_quality'] = "Hook deve ser impactante: pergunta, estatística ou promessa"
+
+        # Classificar por severidade
+        critical_issues = [i for i in issues if 'CRÍTICO' in i]
+        important_issues = [i for i in issues if 'IMPORTANTE' in i]
+        warnings = [i for i in issues if 'AVISO' in i or 'ERRO' in i]
+
+        # Válido se não tem CRÍTICO e no máximo 2 IMPORTANTE
+        is_valid = len(critical_issues) == 0 and len(important_issues) <= 2
+
+        return is_valid, issues, suggestions
+
+    @staticmethod
+    def validate_visual_plan_comprehensive(
+        visual_plan: dict,
+        script: dict
+    ) -> tuple[bool, list[str], dict]:
+        """
+        Validação completa de plano visual.
+
+        Args:
+            visual_plan: Plano visual gerado
+            script: Script correspondente
+
+        Returns:
+            Tupla (is_valid, issues, suggestions)
+        """
+        issues = []
+        suggestions = {}
+
+        # CAMADA 1: Estrutura
+        if not visual_plan.get('scenes'):
+            issues.append("CRÍTICO: Plano visual sem cenas")
+            suggestions['scenes'] = "Crie plano visual para cada cena do roteiro"
+
+        if not visual_plan.get('color_palette'):
+            issues.append("IMPORTANTE: Faltando paleta de cores")
+            suggestions['color_palette'] = "Defina 2-3 cores principais (#HEX format)"
+
+        # CAMADA 2: Alinhamento com script
+        script_scenes = len(script.get('scenes', []))
+        visual_scenes = len(visual_plan.get('scenes', []))
+
+        if script_scenes != visual_scenes:
+            issues.append(f"ERRO: Número de cenas não bate (script: {script_scenes}, visual: {visual_scenes})")
+            suggestions['alignment'] = f"Crie exatamente {script_scenes} cenas visuais"
+
+        # CAMADA 3: Qualidade das search queries
+        scenes = visual_plan.get('scenes', [])
+        for i, scene in enumerate(scenes):
+            queries = scene.get('search_queries', [])
+            if not queries or len(queries) == 0:
+                issues.append(f"IMPORTANTE: Cena {i+1} sem search queries")
+                suggestions[f'scene_{i+1}_queries'] = "Adicione 2-3 queries específicas (não genéricas)"
+            elif len(queries) < 2:
+                issues.append(f"AVISO: Cena {i+1} com poucas queries ({len(queries)})")
+
+        # CAMADA 4: Elementos visuais
+        for i, scene in enumerate(scenes):
+            if not scene.get('visual_concept'):
+                issues.append(f"IMPORTANTE: Cena {i+1} sem conceito visual")
+
+            if not scene.get('composition'):
+                issues.append(f"AVISO: Cena {i+1} sem definição de composição")
+
+        critical_issues = [i for i in issues if 'CRÍTICO' in i]
+        important_issues = [i for i in issues if 'IMPORTANTE' in i]
+
+        is_valid = len(critical_issues) == 0 and len(important_issues) <= 1
+
+        return is_valid, issues, suggestions
+
+    @staticmethod
+    def validate_final_output(state: dict) -> tuple[bool, list[str], float]:
+        """
+        Quality gate final antes de entregar vídeo.
+
+        Args:
+            state: Estado completo do vídeo
+
+        Returns:
+            Tupla (approved, issues, quality_score)
+        """
+        issues = []
+        quality_score = 100.0  # Começa com 100, deduz por problema
+
+        # COMPLETUDE (peso: 40%)
+        components = {
+            'script': state.get('script'),
+            'visual_plan': state.get('visual_plan'),
+            'audio_files': state.get('audio_files'),
+            'video_path': state.get('video_path')
+        }
+
+        missing = [k for k, v in components.items() if not v]
+        if missing:
+            issues.append(f"CRÍTICO: Componentes faltando: {missing}")
+            quality_score -= 40.0  # Penalidade total
+
+        # COERÊNCIA (peso: 30%)
+        if components['script'] and components['visual_plan']:
+            script_scenes = len(state['script'].get('scenes', []))
+            visual_scenes = len(state['visual_plan'].get('scenes', []))
+            if script_scenes != visual_scenes:
+                issues.append("ERRO: Incoerência entre script e visual")
+                quality_score -= 15.0
+
+        # QUALIDADE INDIVIDUAL (peso: 30%)
+        if components['script']:
+            has_hook = bool(state['script'].get('hook'))
+            has_cta = bool(state['script'].get('cta'))
+            if not has_hook:
+                issues.append("IMPORTANTE: Script sem hook")
+                quality_score -= 10.0
+            if not has_cta:
+                issues.append("IMPORTANTE: Script sem CTA")
+                quality_score -= 5.0
+
+        # APROVAÇÃO: score >= 70 e sem CRÍTICO
+        critical_issues = [i for i in issues if 'CRÍTICO' in i]
+        approved = quality_score >= 70.0 and len(critical_issues) == 0
+
+        return approved, issues, quality_score
+
+
 class VideoStateValidator:
     """
     Validador específico para VideoState (estado do LangGraph).

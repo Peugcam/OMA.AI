@@ -27,6 +27,8 @@ import asyncio
 
 # Módulos otimizados
 from core import AIClient, AIClientFactory, SmartRouter, PromptTemplates, ResponseValidator
+from core.optimized_prompts import OptimizedPrompts
+from core.optimized_params import OptimizedParams
 
 # Tipos para compatibilidade (VideoState é apenas um dict)
 from typing import Dict, Any
@@ -474,6 +476,7 @@ Responda em 3-4 linhas concisas."""
     async def analyze_request_simple(self, brief: Dict[str, Any]) -> Dict[str, Any]:
         """
         Análise SIMPLES sem ReAct (fallback).
+        ATUALIZADO: Usa prompts e parâmetros otimizados.
 
         Args:
             brief: Briefing do vídeo com informações do cliente
@@ -483,35 +486,20 @@ Responda em 3-4 linhas concisas."""
         """
         self.logger.info(f"🔍 [SIMPLES] Analisando requisição: {brief.get('title', 'Sem título')}")
 
-        prompt = f"""Analise esta requisição de vídeo e extraia os requisitos:
+        # NOVO: Usar prompt otimizado com Chain-of-Thought
+        prompt = OptimizedPrompts.supervisor_analysis(brief)
 
-BRIEFING:
-{json.dumps(brief, indent=2, ensure_ascii=False)}
-
-Identifique:
-1. Objetivo principal do vídeo
-2. Público-alvo
-3. Tom/estilo desejado
-4. Duração target
-5. Elementos visuais necessários
-6. Requisitos de áudio (narração, música)
-7. Call-to-action ou mensagem final
-
-Responda em JSON com essa estrutura:
-{{
-  "objective": "objetivo do vídeo",
-  "target_audience": "descrição do público",
-  "style": "tom e estilo",
-  "duration_seconds": número,
-  "visual_requirements": ["item1", "item2"],
-  "audio_requirements": ["item1", "item2"],
-  "cta": "call to action"
-}}
-"""
+        # NOVO: Usar parâmetros otimizados para decisão estratégica
+        params = OptimizedParams.STRATEGIC_DECISION
 
         response = await self.llm.chat(
             messages=[{"role": "user", "content": prompt}],
-            system_prompt=self.system_prompt
+            system_prompt=self.system_prompt,
+            temperature=params.temperature,
+            max_tokens=params.max_tokens,
+            top_p=params.top_p,
+            frequency_penalty=params.frequency_penalty,
+            presence_penalty=params.presence_penalty
         )
 
         # Usar ResponseValidator para parsing robusto

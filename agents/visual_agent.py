@@ -19,6 +19,7 @@ from pathlib import Path
 
 from core import AIClient, AIClientFactory, PromptTemplates, ResponseValidator
 from core.paths import get_images_dir, get_pexels_videos_dir
+from core.optimized_params import OptimizedParams
 
 
 class VisualAgent:
@@ -370,13 +371,19 @@ IMPORTANTE: Na dúvida, escolha "pexels" (vídeos reais são sempre melhores e m
 
 Responda APENAS com uma palavra: pexels ou stability"""
 
+            # ATUALIZADO: Usar parâmetros otimizados para decisão técnica
+            params = OptimizedParams.TECHNICAL_PLANNING
+
             response = await self.llm.chat(
                 messages=[{
                     "role": "user",
                     "content": classification_prompt
                 }],
-                temperature=0.3,
-                max_tokens=50  # Aumentado de 10 para 50
+                temperature=0.3,  # Manter 0.3 (decisão binária)
+                max_tokens=50,
+                top_p=params.top_p,
+                frequency_penalty=params.frequency_penalty,
+                presence_penalty=params.presence_penalty
             )
 
             classification = response.strip().lower()
