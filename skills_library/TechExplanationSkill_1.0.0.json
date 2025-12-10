@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "name": "TechExplanationSkill",
+    "version": "1.0.0",
+    "description": "Explica conceitos técnicos complexos de forma simples e memorável",
+    "author": "OMA System",
+    "created_at": "2025-12-09T23:14:27.524472",
+    "updated_at": "2025-12-09T23:14:27.524478",
+    "tags": [
+      "education",
+      "explanation",
+      "teaching",
+      "simplification"
+    ],
+    "dependencies": [],
+    "usage_count": 0,
+    "success_rate": 0.0
+  },
+  "procedure": {
+    "steps": [
+      "1. ESCOLHA ANALOGIA do mundo real (restaurante, criança, carro, etc)",
+      "2. EXPLIQUE BÁSICO em 1 frase de 10 palavras",
+      "3. CAMADAS PROGRESSIVAS: nível 1 (criança) → 2 (teen) → 3 (técnico)",
+      "4. EXEMPLO PRÁTICO concreto que todos conhecem",
+      "5. CORRIJA conceito errado comum sobre o tema",
+      "6. CONECTE ao uso real no cotidiano"
+    ],
+    "checklist": [
+      "Analogia do mundo real clara?",
+      "Primeira frase com max 10 palavras?",
+      "3 níveis de profundidade?",
+      "Exemplo prático reconhecível?",
+      "Corrigiu misconception comum?",
+      "Conectou ao uso cotidiano?",
+      "Zero jargão não explicado?",
+      "Tom conversacional (você/seu)?",
+      "Visual simples planejado?",
+      "Testável com criança de 8 anos?"
+    ],
+    "warnings": [
+      "⚠️ NUNCA comece com definição técnica formal",
+      "⚠️ NUNCA use mais de 3 níveis de profundidade",
+      "⚠️ NUNCA assuma conhecimento prévio",
+      "⚠️ NUNCA faça analogia que precisa ser explicada",
+      "⚠️ NUNCA esqueça o 'Por que eu deveria me importar?'"
+    ],
+    "tips": [
+      "💡 Técnica Feynman: se não consegue explicar para criança, não entendeu",
+      "💡 Analogias físicas > abstratas (carro vs conceito filosófico)",
+      "💡 Use VERBOS de ação: conecta, transforma, envia",
+      "💡 Diagrama simples > mil palavras (planeje visual)",
+      "💡 Termine sempre com 'Agora você sabe o suficiente para usar'"
+    ]
+  },
+  "best_practices": [
+    "✓ REGRA FUNDAMENTAL: Explique como se fosse para seu avô/avó",
+    "✓ Uma ANALOGIA principal + exemplos secundários",
+    "✓ Estrutura SEMPRE: O que é → Como funciona → Pra que serve → Exemplo real",
+    "✓ Evite 'basicamente', 'simplesmente', 'apenas' (condescendente)",
+    "✓ Use VOCÊ/SEU (não 'o usuário', 'a pessoa')",
+    "✓ Números CONCRETOS: '3 passos' melhor que 'alguns passos'",
+    "✓ Corrija MITOS: 'Muitos pensam X, mas na verdade é Y'",
+    "✓ Conecte ao CONHECIDO: 'Igual quando você [ação cotidiana]'",
+    "✓ Visual PROGRESSIVO: começa simples → adiciona complexidade",
+    "✓ TESTE final: consegue explicar em 30 segundos?"
+  ],
+  "examples": {
+    "Machine Learning Explicado": "\nCONCEITO: Machine Learning\n\nANALOGIA BASE:\n\"Machine Learning é como ensinar uma criança a identificar frutas.\n\nVocê não dá regras: 'se redondo e vermelho = maçã'\nVocê MOSTRA 100 fotos de maçãs.\nA criança aprende sozinha os padrões.\n\nML = mostrar exemplos → computador aprende padrões → aplica em novos casos\"\n\nCAMADAS DE COMPLEXIDADE:\n\n🟢 NÍVEL 1 (Criança de 8 anos):\n\"É ensinar computador a aprender sozinho, igual você aprendeu a andar de bike\"\n\n🟡 NÍVEL 2 (Adolescente):\n\"É dar exemplos ao computador. Ele encontra padrões e usa em situações novas.\nEx: mostrar 1000 emails → ele aprende o que é spam → filtra sozinho\"\n\n🔴 NÍVEL 3 (Técnico):\n\"Algoritmos que otimizam função objetivo baseados em dados históricos.\nSupervisionado: labels conhecidos. Não-supervisionado: descobre padrões.\nReforço: aprende por tentativa e erro com rewards\"\n\nEXEMPLO PRÁTICO:\nNetflix recomendações:\n- DADOS: você assistiu 100 filmes\n- PADRÃO: gosta de suspense + final feliz\n- APLICAÇÃO: recomenda \"filme X\" que combina isso\n\nERRO COMUM CORRIGIDO:\n❌ \"ML é IA que pensa sozinha\"\n✅ \"ML encontra padrões em dados. Não 'pensa', reconhece similaridades\"\n",
+    "API Explicado": "\nCONCEITO: API (Application Programming Interface)\n\nANALOGIA BASE:\n\"API é como cardápio de restaurante.\n\nVOCÊ (app) não precisa saber:\n- Como fazer o prato\n- Onde fica a cozinha\n- Quem é o chef\n\nVOCÊ só precisa:\n- Ler o cardápio (documentação)\n- Fazer pedido (request)\n- Receber prato pronto (response)\n\nAPI = cardápio de funções que outro sistema oferece\"\n\nCAMADAS:\n\n🟢 NÍVEL 1:\n\"É um garçom entre dois programas. Um pede, outro entrega\"\n\n🟡 NÍVEL 2:\n\"Contrato: 'Se você me mandar X, eu te devolvo Y'\nExemplo: manda CEP → recebe endereço completo\"\n\n🔴 NÍVEL 3:\n\"Interface padronizada (REST, GraphQL, gRPC) para comunicação entre sistemas.\nDefine endpoints, métodos HTTP, formato de dados (JSON/XML), autenticação\"\n\nEXEMPLO PRÁTICO:\nLogin com Google:\n- SEU APP pede: \"quero dados do usuário\"\n- API GOOGLE: \"ok, aqui está nome, email, foto\"\n- Você NÃO vê senha, NÃO acessa servidor Google\n\nERRO COMUM CORRIGIDO:\n❌ \"API é um site\"\n✅ \"API é porta de comunicação. Site é interface visual\"\n"
+  },
+  "common_pitfalls": [
+    "Começar pelo conceito técnico (perde logo de cara)",
+    "Usar jargão sem definir antes",
+    "Analogia muito distante da realidade técnica",
+    "Não mostrar exemplo prático concreto",
+    "Explicação com mais de 3 níveis de profundidade",
+    "Esquecer de corrigir conceitos errados comuns",
+    "Não conectar com uso real no dia-a-dia",
+    "Linguagem passiva e impessoal"
+  ]
+}

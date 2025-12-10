@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "name": "VideoScriptingSkill",
+    "version": "1.0.0",
+    "description": "Cria roteiros virais para vídeos curtos seguindo estrutura comprovada",
+    "author": "OMA System",
+    "created_at": "2025-12-09T23:14:27.523798",
+    "updated_at": "2025-12-09T23:14:27.523802",
+    "tags": [
+      "video",
+      "script",
+      "viral",
+      "tiktok",
+      "shorts",
+      "reels"
+    ],
+    "dependencies": [],
+    "usage_count": 0,
+    "success_rate": 0.0
+  },
+  "procedure": {
+    "steps": [
+      "1. HOOK (0-3s): Estatística chocante OU pergunta intrigante OU afirmação controversa",
+      "2. PROBLEMA (3-15s): Identifica DOR específica do público-alvo",
+      "3. SOLUÇÃO (15-45s): Apresenta resposta clara em 3 passos simples",
+      "4. PROVA (45s-1m30): Dados concretos + casos reais + autoridade",
+      "5. CTA (últimos 5s): UMA ação clara e urgente"
+    ],
+    "checklist": [
+      "Hook prende nos primeiros 3 segundos?",
+      "Problema gera identificação emocional?",
+      "Solução tem exatamente 3 passos?",
+      "Prova tem números concretos?",
+      "CTA é única e clara?",
+      "Cada frase tem max 15 palavras?",
+      "Linguagem ativa (não passiva)?",
+      "Elementos visuais planejados?",
+      "Timing total entre 60-90s?",
+      "Tom de voz especificado?"
+    ],
+    "warnings": [
+      "⚠️ NUNCA comece com 'Oi, tudo bem?' (mata retenção)",
+      "⚠️ NUNCA use mais de 3 passos na solução (confunde)",
+      "⚠️ NUNCA dê múltiplos CTAs (divide atenção)",
+      "⚠️ NUNCA ultrapasse 90 segundos (perda de audiência)",
+      "⚠️ NUNCA use jargão técnico sem explicar (exclui público)"
+    ],
+    "tips": [
+      "💡 Use números ímpares (3, 5, 7) - cérebro processa melhor",
+      "💡 Hook com pergunta retórica aumenta retenção em 23%",
+      "💡 Mostre transformação visual (antes/depois) no segundo 10",
+      "💡 Cite autoridades conhecidas (Google, NASA, Harvard)",
+      "💡 Use emojis estratégicos (1-2 por seção, não mais)"
+    ]
+  },
+  "best_practices": [
+    "✓ Sentenças CURTAS: máximo 15 palavras por frase",
+    "✓ Voz ATIVA: 'Você cria' em vez de 'É criado por você'",
+    "✓ Números ESPECÍFICOS: '83%' em vez de 'maioria'",
+    "✓ Linguagem CONVERSACIONAL: escreva como fala",
+    "✓ CONTRASTE visual: alterne texto/ação/resultado",
+    "✓ URGÊNCIA sutil: 'HOJE', 'AGORA', 'JÁ'",
+    "✓ STORYTELLING micro: problema → jornada → resultado",
+    "✓ Marque TIMING exato: [0-3s], [3-15s], etc.",
+    "✓ Planeje VISUAL: especifique o que aparece na tela",
+    "✓ Tom de VOZ: urgente, calmo, enérgico, misterioso"
+  ],
+  "examples": {
+    "Script Tech (60s)": "\n[0-3s] HOOK - Tela preta, voz impactante:\n\"83% dos programadores cometem ESTE erro fatal...\"\n\n[3-15s] PROBLEMA:\n\"Você escreve código que funciona, mas ninguém consegue manter.\nEm 6 meses, nem VOCÊ entende o que fez.\"\n\n[15-45s] SOLUÇÃO em 3 passos:\n1. Clean Code: Nomes que explicam\n2. SOLID: Cada classe uma responsabilidade\n3. Testes: Código que se auto-documenta\n\n[Visual: Exemplo antes/depois no VS Code]\n\n[45s-1m20] PROVA:\n\"Projetos com Clean Code têm 40% menos bugs.\nManutenção cai de 8h para 2h.\nGoogle, Microsoft, Netflix usam isso.\"\n\n[Visual: Logos + estatísticas]\n\n[1m20-1m30] CTA:\n\"Link na bio para checklist GRATUITO de Clean Code.\nTransforme seu código HOJE.\"\n\n[Visual: QR Code + texto \"CHECKLIST GRÁTIS\"]\n",
+    "Script Educacional (90s)": "\n[0-3s] HOOK:\n\"O segredo que escolas NÃO ensinam sobre aprender rápido...\"\n\n[3-15s] PROBLEMA:\n\"Você estuda 4 horas e esquece tudo em 2 dias.\nO problema? Você está usando o método ERRADO.\"\n\n[15-50s] SOLUÇÃO - Técnica Feynman:\n1. Escolha o conceito\n2. Explique para uma criança de 5 anos\n3. Identifique lacunas\n4. Simplifique ainda mais\n\n[Visual: Animação dos 4 passos]\n\n[50s-1m15] PROVA:\n\"Einstein usava isso. Feynman ganhou Nobel com isso.\nEstudos mostram: você lembra 90% vs 20% da leitura passiva.\"\n\n[Visual: Gráfico de retenção]\n\n[1m15-1m30] CTA:\n\"Salve este vídeo. Use HOJE no seu próximo estudo.\nMe marque nos resultados! 🧠\"\n\n[Visual: Emoji + \"TAG @omachannel\"]\n"
+  },
+  "common_pitfalls": [
+    "Hook genérico sem impacto ('Hoje vou falar sobre...')",
+    "Problema vago que não gera identificação emocional",
+    "Solução com mais de 3 passos (gera confusão)",
+    "Prova sem números concretos (perde credibilidade)",
+    "CTA múltiplo ('curte, comenta, compartilha, segue...')",
+    "Roteiro sem marcação de tempo (desorganizado)",
+    "Linguagem complexa (perde atenção)",
+    "Sem elementos visuais planejados"
+  ]
+}

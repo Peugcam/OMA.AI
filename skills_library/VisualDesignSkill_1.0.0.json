@@ -1,0 +1,85 @@
+{
+  "metadata": {
+    "name": "VisualDesignSkill",
+    "version": "1.0.0",
+    "description": "Planeja elementos visuais estratégicos para maximizar retenção em vídeos",
+    "author": "OMA System",
+    "created_at": "2025-12-09T23:14:27.525157",
+    "updated_at": "2025-12-09T23:14:27.525161",
+    "tags": [
+      "design",
+      "visual",
+      "storyboard",
+      "video",
+      "ux"
+    ],
+    "dependencies": [],
+    "usage_count": 0,
+    "success_rate": 0.0
+  },
+  "procedure": {
+    "steps": [
+      "1. DEFINA OBJETIVO visual (educar? emocionar? urgência?)",
+      "2. ESCOLHA PALETA: 1 cor dominante + 2 acentos máximo",
+      "3. STORYBOARD frame-a-frame: desenhe cada 5 segundos",
+      "4. PLANEJE MOVIMENTO: animações estratégicas a cada 10s",
+      "5. HIERARQUIA visual: 1 elemento dominante por frame",
+      "6. CONTRASTE obrigatório: texto vs background mínimo 7:1",
+      "7. TESTE acessibilidade: daltonismo + baixa visão"
+    ],
+    "checklist": [
+      "Paleta de cores definida (max 3)?",
+      "Storyboard frame-a-frame criado?",
+      "Movimento a cada 10 segundos?",
+      "Contraste verificado (WCAG AAA)?",
+      "Hierarquia visual clara?",
+      "Texto legível em mobile?",
+      "Acessibilidade validada?",
+      "Visual reforça áudio?",
+      "Call-to-action visualmente destacado?",
+      "Testado em tela pequena?"
+    ],
+    "warnings": [
+      "⚠️ NUNCA use mais de 3 cores por frame",
+      "⚠️ NUNCA textos menores que 5% da altura da tela",
+      "⚠️ NUNCA animações abaixo de 0.3s (invisíveis)",
+      "⚠️ NUNCA elementos críticos nas bordas (crop mobile)",
+      "⚠️ NUNCA ignore contraste (exclui 15% da audiência)"
+    ],
+    "tips": [
+      "💡 Regra 10s: Mude visual a cada 10 segundos (mantém atenção)",
+      "💡 Animação 'Aparecer': fade-in 0.5s (suave e profissional)",
+      "💡 Cores quentes (vermelho/laranja) = urgência, frias (azul) = confiança",
+      "💡 Teste em modo grayscale: ainda funciona? Bom design!",
+      "💡 F-Pattern para texto: Olho lê em F (top-left mais importante)"
+    ]
+  },
+  "best_practices": [
+    "✓ REGRA DOS TERÇOS: Elementos importantes nas interseções",
+    "✓ HIERARQUIA de tamanho: Título 2x maior que subtítulo",
+    "✓ ESPAÇO em branco: 40% do frame vazio (respiro visual)",
+    "✓ CONSISTÊNCIA: mesma transição em situações similares",
+    "✓ CONTRASTE estratégico: alto para CTA, baixo para secundário",
+    "✓ MOVIMENTO com propósito: anima quando introduz conceito novo",
+    "✓ CORES com significado: verde=sucesso, vermelho=erro SEMPRE",
+    "✓ TIPOGRAFIA limitada: máximo 2 fontes diferentes",
+    "✓ MOBILE-FIRST: projete para 9:16 (vertical)",
+    "✓ ACESSIBILIDADE: teste com simulador de daltonismo"
+  ],
+  "examples": {
+    "Storyboard Vídeo Tech (60s)": "\n═══════════════════════════════════════════════════════════\n🎬 STORYBOARD: \"3 Erros Fatais em Clean Code\"\n═══════════════════════════════════════════════════════════\n\n[0-3s] HOOK - IMPACTO VISUAL MÁXIMO\n┌─────────────────────────────────────┐\n│ VISUAL:                             │\n│ • Fundo: Tela PRETA total           │\n│ • Texto: \"83%\" em VERMELHO NEON     │\n│ • Animação: Número cresce de 0→83%  │\n│ • Duração: 1.5s                     │\n│                                     │\n│ ÁUDIO:                              │\n│ • Som de alerta (bip urgente)       │\n│ • Voz grave: \"83% dos program...\"   │\n└─────────────────────────────────────┘\n\n[3-15s] PROBLEMA - IDENTIFICAÇÃO\n┌─────────────────────────────────────┐\n│ VISUAL:                             │\n│ • Split screen:                     │\n│   - Esquerda: Código CAÓTICO        │\n│   - Direita: Dev confuso (emoji)    │\n│ • Código desfocado gradualmente     │\n│ • Texto sobre: \"6 meses depois...\"  │\n│                                     │\n│ CORES:                              │\n│ • Código: Syntax highlight normal   │\n│ • Background: Gradiente escuro      │\n│ • Acentos: Amarelo (atenção)        │\n└─────────────────────────────────────┘\n\n[15-45s] SOLUÇÃO - TRANSFORMAÇÃO\n┌─────────────────────────────────────┐\n│ VISUAL: 3 CARDS SEQUENCIAIS         │\n│                                     │\n│ CARD 1: [15-25s]                    │\n│ • Ícone: 🏷️ grande                 │\n│ • Título: \"1. Nomes Claros\"         │\n│ • Before/After code side-by-side    │\n│ • Seta verde: Antes → Depois        │\n│                                     │\n│ CARD 2: [25-35s]                    │\n│ • Ícone: 🎯                         │\n│ • Título: \"2. SOLID\"                │\n│ • Diagrama: Classe única responsa.  │\n│ • Animação: Quebra classe grande    │\n│                                     │\n│ CARD 3: [35-45s]                    │\n│ • Ícone: ✅                         │\n│ • Título: \"3. Testes\"               │\n│ • Terminal: testes passando (verde) │\n│ • Contador: 15/15 tests passed      │\n│                                     │\n│ TRANSIÇÃO entre cards: Slide rápido │\n└─────────────────────────────────────┘\n\n[45s-1min] PROVA - CREDIBILIDADE\n┌─────────────────────────────────────┐\n│ VISUAL: GRID DE AUTORIDADE          │\n│                                     │\n│ ┌─────────┬─────────┬─────────┐    │\n│ │ Google  │  Meta   │ Netflix │    │\n│ │  Logo   │  Logo   │  Logo   │    │\n│ └─────────┴─────────┴─────────┘    │\n│                                     │\n│ ESTATÍSTICAS ANIMADAS:              │\n│ • \"40% menos bugs\"                  │\n│   (Contador animado: 0 → 40%)       │\n│ • \"8h → 2h manutenção\"              │\n│   (Barra progress diminuindo)       │\n│                                     │\n│ CORES: Verde (sucesso) + Azul       │\n└─────────────────────────────────────┘\n\n[1min-1min05] CTA - AÇÃO CLARA\n┌─────────────────────────────────────┐\n│ VISUAL: FULL SCREEN CHAMADA         │\n│                                     │\n│ • QR Code: GRANDE, centro           │\n│ • Texto: \"CHECKLIST GRATUITO\"       │\n│ • Seta pulsante: Apontando QR       │\n│ • Background: Gradiente verde       │\n│                                     │\n│ ANIMAÇÃO:                           │\n│ • QR Code cresce (0.5s)             │\n│ • Pulso suave contínuo              │\n│                                     │\n│ ÁUDIO: \"Link na bio. Use HOJE.\"     │\n└─────────────────────────────────────┘\n\n═══════════════════════════════════════════════════════════\n📊 PRINCÍPIOS APLICADOS:\n═══════════════════════════════════════════════════════════\n✓ Contraste visual a cada 10s (evita monotonia)\n✓ Cores estratégicas (Vermelho=urgência, Verde=sucesso)\n✓ Movimento constante (0 frames estáticos)\n✓ Hierarquia clara (1 elemento dominante por segundo)\n✓ Regra dos terços aplicada\n✓ Call-to-action visualmente destacado\n",
+    "Paleta de Cores - Vídeo Educacional": "\n═══════════════════════════════════════════════════════════\n🎨 GUIA DE CORES ESTRATÉGICAS\n═══════════════════════════════════════════════════════════\n\nOBJETIVO: Vídeo educacional sobre Python para iniciantes\n\n┌─────────────────────────────────────────────────────────┐\n│ CORES PRINCIPAIS                                        │\n├─────────────────────────────────────────────────────────┤\n│                                                         │\n│ 🔵 AZUL PRIMÁRIO: #3498db                              │\n│ Uso: Background principal, títulos principais           │\n│ Psicologia: Confiança, aprendizado, tecnologia         │\n│ Quando: Introdução de conceitos novos                  │\n│                                                         │\n│ 🟢 VERDE SUCESSO: #2ecc71                              │\n│ Uso: Checkmarks, código correto, \"after\" em exemplos   │\n│ Psicologia: Conquista, correto, aprovação              │\n│ Quando: Mostrar solução, código funcionando            │\n│                                                         │\n│ 🔴 VERMELHO ALERTA: #e74c3c                            │\n│ Uso: Erros, \"before\" em exemplos, avisos               │\n│ Psicologia: Atenção, erro, cuidado                     │\n│ Quando: Destacar problemas, bugs, anti-patterns        │\n│                                                         │\n│ 🟡 AMARELO DESTAQUE: #f39c12                           │\n│ Uso: Highlights em código, info importante             │\n│ Psicologia: Atenção positiva, insight                  │\n│ Quando: \"Preste atenção aqui\", dicas, tips             │\n│                                                         │\n│ ⚪ CINZA NEUTRO: #95a5a6                               │\n│ Uso: Texto secundário, bordas, divisores               │\n│ Psicologia: Neutralidade, suporte                      │\n│ Quando: Informações complementares                     │\n└─────────────────────────────────────────────────────────┘\n\nREGRAS DE COMBINAÇÃO:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✓ MAX 3 cores por frame\n✓ 60% cor dominante + 30% secundária + 10% acento\n✓ Alto contraste sempre (WCAG AAA): mínimo 7:1\n✓ Nunca vermelho + verde no mesmo elemento (daltonismo)\n✓ Background escuro (#2c3e50) para vídeos longos (menos cansaço)\n\nEXEMPLOS DE USO:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nFrame \"Comparação Before/After\":\n┌──────────────┬──────────────┐\n│   ❌ ANTES   │   ✅ DEPOIS  │\n│              │              │\n│ Background:  │ Background:  │\n│ Vermelho 20% │ Verde 20%    │\n│ opacity      │ opacity      │\n│              │              │\n│ Código com   │ Código com   │\n│ highlight    │ highlight    │\n│ amarelo      │ amarelo      │\n└──────────────┴──────────────┘\n"
+  },
+  "common_pitfalls": [
+    "Muitas cores simultâneas (confusão visual)",
+    "Texto sobre imagem sem contraste adequado",
+    "Animações muito rápidas (<0.3s = imperceptível)",
+    "Animações muito lentas (>2s = perde ritmo)",
+    "Fonte pequena demais (<5% altura da tela)",
+    "Elementos importantes nas bordas (são cortados)",
+    "Frames estáticos por >5s (perda de atenção)",
+    "Ignorar acessibilidade (contraste, daltonismo)",
+    "Visual que não reforça o áudio (desconexão)",
+    "Transições diferentes a cada frame (inconsistência)"
+  ]
+}
