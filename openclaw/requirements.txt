@@ -1,0 +1,18 @@
+# OpenClaw Requirements
+
+# Core framework (uses parent OMA.AI framework)
+# See ../requirements_openrouter.txt for framework dependencies
+
+# CLI and UI
+rich==13.7.0
+prompt-toolkit==3.0.43
+
+# Additional tools
+gitpython==3.1.40
+black==23.12.1
+isort==5.13.2
+pylint==3.0.3
+
+# Optional: For advanced features
+# redis==5.0.1  # For task queue
+# chromadb==0.4.22  # For memory/vector DB
