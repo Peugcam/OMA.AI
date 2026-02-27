@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from framework import AgentRegistry
 from openclaw.agents.coder_agent import CoderAgent
+from openclaw.agents.leao_agent import LeaoAgent
 from core import AIClient
 from dotenv import load_dotenv
 
@@ -71,8 +72,15 @@ class OpenClaw:
             temperature=0.3
         )
         self.registry.register(coder)
-
         console.print("[green]✓[/green] Registered CoderAgent")
+
+        # Leão agent (WhatsApp - 5511956612953)
+        leao = LeaoAgent(
+            model="openrouter/qwen/qwen-2.5-7b-instruct",
+            temperature=0.7
+        )
+        self.registry.register(leao)
+        console.print("[green]✓[/green] Registered LeaoAgent 🦁")
 
         # TODO: Add more agents (Debugger, Tester, Reviewer, etc.)
 
