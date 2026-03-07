@@ -342,14 +342,8 @@ Retorne em formato JSON:
 }}
 """
 
-            # Usar AI client para fazer pesquisa inteligente
-            response = await self.ai_client.generate(
-                model="gpt-4",
-                messages=[{"role": "user", "content": research_prompt}],
-                temperature=0.3
-            )
-
-            market_insights = response.get('content', '{}')
+            # Usar LLM client para fazer pesquisa inteligente
+            market_insights = await self.llm.generate(research_prompt)
 
             # Parse JSON
             import json
