@@ -6,57 +6,89 @@
 
 ---
 
-## 💰 RESUMO DE CUSTOS MENSAIS
+## 💰 RESUMO DE CUSTOS (Pay-as-you-go)
 
-| API | Plano | Custo/Mês | Uso |
-|-----|-------|-----------|-----|
-| **RunwayML Gen-3** | Standard | $28 | 200 créditos (~40 vídeos de 20s) |
-| **ElevenLabs** | Starter | $22 | 100k caracteres/mês (~200 narrações) |
-| **OpenRouter** | Pay-as-you-go | $10-20 | Scripts + Análise de produtos |
-| **TOTAL** | | **$60-70/mês** | Produção automatizada completa |
+### Custo por Vídeo de 20s:
+| API | Custo |
+|-----|-------|
+| **RunwayML API** (Gen-3 Turbo) | $0.40 |
+| **ElevenLabs** (Narração) | $0.11 |
+| **OpenRouter** (Script + Vision) | $0.05 |
+| **TOTAL POR VÍDEO** | **$0.56** ✅ |
 
-**ROI Estimado:** Com 40 vídeos/mês, precisando converter apenas 2-3 vendas para pagar as APIs.
+### Custo Mensal Estimado:
+| Vídeos/Mês | RunwayML | ElevenLabs | OpenRouter | TOTAL |
+|------------|----------|------------|------------|-------|
+| 10 vídeos | $4 | $22 | $10 | **$36/mês** |
+| 20 vídeos | $8 | $22 | $15 | **$45/mês** |
+| 40 vídeos | $16 | $22 | $20 | **$58/mês** |
+
+**ROI:** Break-even com apenas 3-4 vendas/mês (comissão ~$12/venda)
 
 ---
 
 ## 🚀 SETUP PASSO-A-PASSO
 
-### 1️⃣ RunwayML Gen-3 (PRIORITÁRIO)
+### 1️⃣ RunwayML API (PRIORITÁRIO)
 
 **Por quê:** Principal ferramenta de geração de vídeo AI profissional
 
+⚠️ **IMPORTANTE:** A API é em portal SEPARADO do site principal!
+
 **Passos:**
 
-1. **Acesse:** https://runwayml.com/
+1. **Acesse o Portal de Desenvolvedores:** https://dev.runwayml.com/
+   (NÃO é app.runwayml.com!)
+
 2. **Crie conta:**
    - Clique em "Sign Up"
-   - Use seu email (recomendo criar um email profissional se ainda não tiver)
+   - Use seu email
    - Confirme o email
 
-3. **Escolha o plano:**
-   - Vá em "Pricing"
-   - Selecione **"Standard" - $28/mês**
-   - 200 créditos mensais
-   - Gen-3 Alpha Turbo disponível
+3. **Crie uma Organização:**
+   - Após login, será solicitado criar uma "Organization"
+   - Nome sugerido: "OMA.AI Production"
+   - Clique em "Create"
 
-4. **Obtenha a API Key:**
-   - Vá em Settings → API Keys
+4. **Gere a API Key:**
+   - Vá na aba "API Keys"
    - Clique em "Create New Key"
-   - Copie a chave (formato: `rw_xxxxxxxxxxxxx`)
-   - **IMPORTANTE:** Guarde em local seguro, só aparece uma vez!
+   - Dê um nome: "OMA.AI Video Generator"
+   - **⚠️ COPIE IMEDIATAMENTE!** A chave aparece uma única vez
+   - Salve em local seguro (gerenciador de senhas)
+   - Formato: `rw_xxxxxxxxxxxxx`
 
-5. **Teste rápido (opcional):**
+5. **Adicione Créditos:**
+   - Vá na aba "Billing"
+   - Clique em "Add Credits"
+   - **Mínimo:** $10 (= 1000 créditos)
+   - **Recomendado para teste:** $25 (= 2500 créditos = ~62 vídeos)
+   - Aceita cartão de crédito
+
+6. **Sistema de Créditos:**
+   ```
+   1 crédito = $0.01
+   Gen-3 Alpha Turbo: ~2 créditos/segundo = $0.02/s
+   Vídeo de 20s: 40 créditos = $0.40
+
+   Com $10: ~25 vídeos de 20s
+   Com $25: ~62 vídeos de 20s
+   Com $50: ~125 vídeos de 20s
+   ```
+
+7. **Teste rápido (opcional):**
    ```bash
-   curl -X POST https://api.runwayml.com/v1/generate \
+   curl -X POST https://api.dev.runwayml.com/v1/generations \
      -H "Authorization: Bearer YOUR_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{
        "prompt": "A beautiful sunset over the ocean",
-       "duration": 5
+       "duration": 5,
+       "model": "gen3a_turbo"
      }'
    ```
 
-**Documentação:** https://docs.runwayml.com/
+**Documentação:** https://docs.dev.runwayml.com/
 
 ---
 
