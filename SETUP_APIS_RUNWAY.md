@@ -6,74 +6,97 @@
 
 ---
 
-## 💰 RESUMO DE CUSTOS (Pay-as-you-go)
+## 💰 RESUMO DE CUSTOS (Plano Pro Recomendado)
 
-### Custo por Vídeo de 20s:
+### Plano Pro - $35/mês:
+```
+2250 créditos/mês
+Gen-3 Alpha Turbo: 2 créditos/segundo
+Capacidade: 1125 segundos = 56 vídeos de 20s
+```
+
+### Custo por Vídeo de 20s (Gen-3 Turbo):
 | API | Custo |
 |-----|-------|
-| **RunwayML API** (Gen-3 Turbo) | $0.40 |
+| **RunwayML Pro** (Gen-3 Turbo) | $0.63 |
 | **ElevenLabs** (Narração) | $0.11 |
 | **OpenRouter** (Script + Vision) | $0.05 |
-| **TOTAL POR VÍDEO** | **$0.56** ✅ |
+| **TOTAL POR VÍDEO** | **$0.79** ✅ |
 
-### Custo Mensal Estimado:
-| Vídeos/Mês | RunwayML | ElevenLabs | OpenRouter | TOTAL |
-|------------|----------|------------|------------|-------|
-| 10 vídeos | $4 | $22 | $10 | **$36/mês** |
-| 20 vídeos | $8 | $22 | $15 | **$45/mês** |
-| 40 vídeos | $16 | $22 | $20 | **$58/mês** |
+### Custo Mensal Total:
+| Item | Custo |
+|------|-------|
+| **RunwayML Pro** | $35/mês (56 vídeos) |
+| **ElevenLabs Starter** | $22/mês |
+| **OpenRouter** | $10-20/mês |
+| **TOTAL MENSAL** | **$67-77/mês** |
 
-**ROI:** Break-even com apenas 3-4 vendas/mês (comissão ~$12/venda)
+**Capacidade:** 56 vídeos/mês (~2 vídeos/dia)
+**ROI:** Break-even com 6-7 vendas/mês (comissão $12/venda)
+**Lucro estimado:** $400-600/mês (com 2% conversão)
 
 ---
 
 ## 🚀 SETUP PASSO-A-PASSO
 
-### 1️⃣ RunwayML API (PRIORITÁRIO)
+### 1️⃣ RunwayML Pro (PRIORITÁRIO)
 
 **Por quê:** Principal ferramenta de geração de vídeo AI profissional
 
-⚠️ **IMPORTANTE:** A API é em portal SEPARADO do site principal!
+⚠️ **IMPORTANTE:** Use o site PRINCIPAL para assinar o plano Pro!
 
 **Passos:**
 
-1. **Acesse o Portal de Desenvolvedores:** https://dev.runwayml.com/
-   (NÃO é app.runwayml.com!)
+1. **Acesse RunwayML:** https://runwayml.com/
 
 2. **Crie conta:**
    - Clique em "Sign Up"
    - Use seu email
    - Confirme o email
 
-3. **Crie uma Organização:**
-   - Após login, será solicitado criar uma "Organization"
-   - Nome sugerido: "OMA.AI Production"
-   - Clique em "Create"
+3. **Assine o Plano Pro:**
+   - Vá em "Pricing" ou "Upgrade"
+   - Selecione **"Pro - $35/mês"**
+   - Preencha dados de pagamento
+   - Confirme assinatura
 
-4. **Gere a API Key:**
+   **O que vem:**
+   - ✅ 2250 créditos/mês
+   - ✅ Gen-4.5, Gen-4, Gen-3 (todos os modelos)
+   - ✅ Custom voices com Lip Sync
+   - ✅ 4K Upscaling
+   - ✅ Sem watermarks
+   - ✅ Fila prioritária
+
+4. **Obtenha API Key (Portal Desenvolvedor):**
+
+   Agora que tem a conta Pro, acesse o portal de API:
+
+   - Vá para: https://dev.runwayml.com/
+   - Login com a MESMA conta
+   - Crie organização (se pedido)
    - Vá na aba "API Keys"
-   - Clique em "Create New Key"
-   - Dê um nome: "OMA.AI Video Generator"
-   - **⚠️ COPIE IMEDIATAMENTE!** A chave aparece uma única vez
-   - Salve em local seguro (gerenciador de senhas)
+   - Clique "Create New Key"
+   - Nome: "OMA.AI Production"
+   - **⚠️ COPIE IMEDIATAMENTE!** (só aparece uma vez)
+   - Salve em gerenciador de senhas
    - Formato: `rw_xxxxxxxxxxxxx`
 
-5. **Adicione Créditos:**
-   - Vá na aba "Billing"
-   - Clique em "Add Credits"
-   - **Mínimo:** $10 (= 1000 créditos)
-   - **Recomendado para teste:** $25 (= 2500 créditos = ~62 vídeos)
-   - Aceita cartão de crédito
+5. **Verificar Créditos:**
+   - No portal dev.runwayml.com
+   - Vá em "Billing" ou "Usage"
+   - Deve mostrar: 2250 créditos disponíveis
+   - Renova todo mês automaticamente
 
-6. **Sistema de Créditos:**
+6. **Sistema de Créditos (Plano Pro):**
    ```
-   1 crédito = $0.01
-   Gen-3 Alpha Turbo: ~2 créditos/segundo = $0.02/s
-   Vídeo de 20s: 40 créditos = $0.40
+   2250 créditos/mês (renova automaticamente)
 
-   Com $10: ~25 vídeos de 20s
-   Com $25: ~62 vídeos de 20s
-   Com $50: ~125 vídeos de 20s
+   Gen-3 Alpha Turbo: 2 créditos/segundo
+   Vídeo de 20s: 40 créditos
+
+   Capacidade: 2250 ÷ 40 = 56 vídeos de 20s/mês
+   Custo/vídeo: $35 ÷ 56 = $0.63
    ```
 
 7. **Teste rápido (opcional):**
