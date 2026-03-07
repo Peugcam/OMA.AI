@@ -23,6 +23,7 @@ from api.models import (
     VideoMetadata,
     SceneInfo
 )
+import httpx  # For webhook notifications
 from api.exceptions import (
     VideoGenerationError,
     ResourceNotFoundError,
@@ -40,13 +41,33 @@ limiter = Limiter(key_func=get_remote_address)
 tasks: Dict[str, Dict] = {}
 
 
-async def _generate_video_async(task_id: str, briefing: dict):
+async def _send_webhook(webhook_url: str, task_id: str, event: str, data: dict):
+    """Send webhook notification to external service (e.g., OpenClaw)"""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            payload = {
+                "event": event,
+                "task_id": task_id,
+                "timestamp": datetime.now().isoformat(),
+                "data": data
+            }
+            response = await client.post(webhook_url, json=payload)
+            if response.status_code == 200:
+                logger.info(f"✅ Webhook sent successfully for task {task_id} to {webhook_url}")
+            else:
+                logger.warning(f"⚠️ Webhook returned status {response.status_code} for task {task_id}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send webhook for task {task_id}: {e}")
+
+
+async def _generate_video_async(task_id: str, briefing: dict, webhook_url: Optional[str] = None):
     """
     Background task for video generation.
 
     Args:
         task_id: Unique task identifier
         briefing: Video briefing dictionary
+        webhook_url: Optional webhook URL for notifications
     """
     try:
         # Update task status
@@ -55,6 +76,13 @@ async def _generate_video_async(task_id: str, briefing: dict):
         tasks[task_id]["updated_at"] = datetime.now()
 
         log_video_generation(task_id, "all", "started")
+
+        # Send webhook: started
+        if webhook_url:
+            await _send_webhook(webhook_url, task_id, "video.started", {
+                "status": "processing",
+                "progress": 0
+            })
 
         # Generate video
         result = await generate_video(briefing)
@@ -86,6 +114,17 @@ async def _generate_video_async(task_id: str, briefing: dict):
                 "completed",
                 cost=result.get("cost", 0.0)
             )
+
+            # Send webhook: completed
+            if webhook_url:
+                await _send_webhook(webhook_url, task_id, "video.completed", {
+                    "status": "completed",
+                    "progress": 100,
+                    "video_path": result.get("video_path"),
+                    "download_url": f"{settings.API_PREFIX}/videos/download/{task_id}",
+                    "cost": result.get("cost", 0.0),
+                    "generation_time": result.get("generation_time", 0)
+                })
         else:
             tasks[task_id]["status"] = "failed"
             tasks[task_id]["error_message"] = result.get("error", "Unknown error")
@@ -97,12 +136,26 @@ async def _generate_video_async(task_id: str, briefing: dict):
                 error=result.get("error")
             )
 
+            # Send webhook: failed
+            if webhook_url:
+                await _send_webhook(webhook_url, task_id, "video.failed", {
+                    "status": "failed",
+                    "error": result.get("error", "Unknown error")
+                })
+
     except Exception as e:
         logger.exception(f"Video generation failed for task {task_id}")
         tasks[task_id]["status"] = "failed"
         tasks[task_id]["error_message"] = str(e)
 
         log_video_generation(task_id, "all", "failed", error=str(e))
+
+        # Send webhook: failed
+        if webhook_url:
+            await _send_webhook(webhook_url, task_id, "video.failed", {
+                "status": "failed",
+                "error": str(e)
+            })
 
     finally:
         tasks[task_id]["updated_at"] = datetime.now()
@@ -160,7 +213,12 @@ async def generate_video_endpoint(
     logger.info(f"Video generation task created: {task_id}")
 
     # Start generation in background
-    background_tasks.add_task(_generate_video_async, task_id, briefing_dict)
+    background_tasks.add_task(
+        _generate_video_async,
+        task_id,
+        briefing_dict,
+        video_request.webhook_url  # Pass webhook URL
+    )
 
     # Return task info
     return VideoGenerationResponse(

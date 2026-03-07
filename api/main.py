@@ -24,7 +24,7 @@ from api.config import settings
 from api.models import ErrorResponse
 from api.exceptions import OMAException
 from api.logger import log_api_request, log_error
-from api.routers import videos, health, stats
+from api.routers import videos, health, stats, product_ads
 
 
 # Application state
@@ -196,6 +196,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 app.include_router(health.router, prefix=settings.API_PREFIX, tags=["Health"])
 app.include_router(videos.router, prefix=settings.API_PREFIX, tags=["Videos"])
 app.include_router(stats.router, prefix=settings.API_PREFIX, tags=["Statistics"])
+app.include_router(product_ads.router, tags=["Product Ads"])
 
 
 # ============================================
